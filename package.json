@@ -1,0 +1,23 @@
+{
+  "name": "keeptrax_api_server",
+  "version": "16.15.0",
+  "description": "keeptrax _api_server",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1142.0",
+    "bcrypt": "^5.0.1",
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.1",
+    "googlemaps": "^1.1.3",
+    "imagemagick": "^0.1.3",
+    "lodash": "^4.17.21",
+    "log4js": "^6.4.7",
+    "mongoose": "^6.3.4",
+    "uuid": "^8.3.2"
+  }
+}
