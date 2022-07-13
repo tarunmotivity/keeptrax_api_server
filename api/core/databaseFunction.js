@@ -54,7 +54,7 @@ module.exports.update = function (model, modelObj, query, cb) {
     });
 };
 
-module.exports.delete = function (model, query,cb) {    
+module.exports.delete = function (model, query, cb) {
     if (!query) query = {};
     model.findOneAndRemove(query, function (err, resp) {
         if (err) {
@@ -65,3 +65,17 @@ module.exports.delete = function (model, query,cb) {
         }
     });
 };
+
+module.exports.getAndPopulate = function (model, query, populateQuery, cb) {
+    if (!query) query = {};
+    model.find(query)
+        .populate(populateQuery)
+        .exec(function (err, resp) {
+            if (err) {
+                logger.error('Error while deleting data ', err);
+                cb(err)
+            } else {
+                cb(null, resp)
+            }
+        });
+}

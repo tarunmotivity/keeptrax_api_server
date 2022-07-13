@@ -6,14 +6,25 @@ module.exports.dbUri = "mongodb://52.34.148.49:27017/qa?retryWrites=true&w=major
 // module.exports.dbUri = "mongodb://localhost:27017/qa?retryWrites=true&w=majority"
 
 
-module.exports.options= {
+module.exports.options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    authSource:"admin",
+    authSource: "admin",
     auth: {
         username: 'myUserAdmin', password: 'KeepTrax123'
-    }   
-},
+    }
+}
+module.exports.smtpConfig = {
+    host: 'email-smtp.us-west-2.amazonaws.com',
+    port: 587,
+    auth: {
+        user: 'AKIA6H4KE3HURCERT2XP',
+        pass: 'BGfJoJzQe4UQunVSutsntrpwmW/CyWXXXiWx4gCuNwkm'
+    }
+}
+
+module.exports.sender='userverify-noreply@keeptraxapp.com',
+
 
 logger4js.configure({
     appenders: {
