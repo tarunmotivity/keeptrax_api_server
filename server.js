@@ -19,7 +19,7 @@ mongoose.connection.on("error", function (error) {
 
 
 mongoose.connect(config.dbUri, config.options);
-
+app.set("view engine", "ejs");
 
 app.get('/', function (req, res) {
     res.send('welcome to KeepTrax')
