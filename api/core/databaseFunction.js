@@ -79,3 +79,17 @@ module.exports.getAndPopulate = function (model, query, populateQuery, cb) {
             }
         });
 }
+
+module.exports.getCount = function (model, query, cb) {
+    if (!query) query = {};
+    model.find(query)
+        .count()
+        .exec(function (err, resp) {
+            if (err) {
+                logger.error('Error while getting count ', err);
+                cb(err)
+            } else {
+                cb(null, resp)
+            }
+        });
+}
