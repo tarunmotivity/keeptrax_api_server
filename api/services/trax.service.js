@@ -5,10 +5,10 @@ var dbObj = require('../core/databaseFunction');
 function getAllTrax(headers, cb) {
     console.log("headers--->", headers)
     var traxData = {}
-    if (headers.start_date && headers.end_date && headers.user_id) {
+    if (headers.startdate && headers.enddate && headers.userid) {
         var dbQuery = {
-            account: headers.user_id,
-            createdOn: { $gte: new Date(headers.start_date), $lte: new Date(headers.end_date) }
+            account: headers.userid,
+            createdOn: { $gte: new Date(headers.startdate), $lte: new Date(headers.enddate) }
         }
         dbObj.getAndPopulate(Visits, dbQuery, 'userPlace', function (err, response) {
             if (err) {
@@ -17,7 +17,7 @@ function getAllTrax(headers, cb) {
             else {
                 traxData.visits = response
                 traxData.visitsCount = response.length
-                placesCount(headers.start_date, headers.end_date, headers.user_id, function (error, count) {
+                placesCount(headers.startdate, headers.enddate, headers.userid, function (error, count) {
                     if (error) {
                         cb(error)
                     } else {
