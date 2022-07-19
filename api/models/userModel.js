@@ -1,5 +1,7 @@
 var mongoose = require('mongoose'),
-    Schema = mongoose.Schema
+    Schema = mongoose.Schema;
+var SALT_WORK_FACTOR = 10,
+    bcrypt = require('bcrypt');
 
 var schema = new Schema({
     birthDate: {
@@ -7,7 +9,13 @@ var schema = new Schema({
     },
     email: {
         type: String,
+        required: true,
+        unique: true
+    },
+    mobile: {
+        type: String,
         required: true
+
     },
     title: {
         type: String
@@ -39,7 +47,7 @@ var schema = new Schema({
     },
     activeStatus: {
         type: Boolean,
-        default: false
+        default: true
     }, // becomes true after activation
     createdOn: {
         type: Date
@@ -98,5 +106,29 @@ schema.index({
 schema.index({
     application: 1
 });
+
+schema.pre('save', function(next) {
+    var user = this;
+    //logger.info(user);
+    // only hash the password if the user is new
+    if (!user.isModified('password'))
+      return next();
+  
+    // generate salt
+    bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
+      if (err)
+        return next(err);
+  
+      // hash the password using the new salt
+      bcrypt.hash(user.password, salt, function(err, hash) {
+        if (err)
+          return next(err);
+        // set the hashed password on the user
+        user.password = hash;
+        next();
+      });
+    });
+  });
+  
 
 module.exports = mongoose.model('Users', schema);
