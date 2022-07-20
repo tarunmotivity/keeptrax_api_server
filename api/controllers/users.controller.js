@@ -1,6 +1,7 @@
 var UserService = require('../services/users.service');
-var config = require('../../config/config')
-var logger = config.getLogger(__filename)
+var config = require('../../config/config');
+var logger = config.getLogger(__filename);
+
 
 
 module.exports.getAllUsers = (req, res) => {
@@ -25,6 +26,16 @@ module.exports.updateUser = (req, res) => {
 
 module.exports.deleteUser = (req, res) => {
     UserService.deleteUser(req.headers, (err, resp) => {
+        if (err) {
+            res.send(err)
+        } else {
+            res.send(resp)
+        }
+    })
+}
+
+exports.addUser = (req, res) => {
+    UserService.addUser(req.body,(err, resp) => {
         if (err) {
             res.send(err)
         } else {
