@@ -19,30 +19,30 @@ function getAllUsers(headers, cb) {
             }
         })
     } else {
-        cb({ code: 404, error:"managerid and organizationid are required" })
+        cb({ code: 404, error: "managerid and organizationid are required" })
     }
 
 }
-const addUser  = (body,cb)=>{
-    try{
+const addUser = (body, cb) => {
+    try {
 
-        const password ="123456"; //Math.random().toString(36).slice(-10);
+        const password = Math.random().toString(36).slice(-10);
         var userPayload = {
-            birthDate:body.birthDate,
-            email:body.email,
-            mobile:body.mobile,
-            title:body.title,
-            tripId:body.tripId,
-            password:password,
+            birthDate: body.birthDate,
+            email: body.email,
+            mobile: body.mobile,
+            title: body.title,
+            tripId: body.tripId,
+            password: password,
             firstname: body.firstName,
             lastname: body.lastName,
-            organization:body.organization,
-            application:body.application,
+            organization: body.organization,
+            application: body.application,
             lastUpdatedOn: new Date(),
-            gender: body.gender, 
-            lockUntil:0,
-            role:body.role?body.role:"USER", 
-            oauth_id: body.oauth_id   
+            gender: body.gender,
+            lockUntil: 0,
+            role: body.role ? body.role : "USER",
+            oauth_id: body.oauth_id
         }
         var model = new User(userPayload)
         dbObj.save(model, (err, resp) => {
@@ -50,16 +50,15 @@ const addUser  = (body,cb)=>{
                 logger.error("Error while addUser", err);
                 cb(err)
             } else {
-                email.welcomeMail(body.lastName,password,body.email)
+                email.welcomeMail(body.lastName, password, body.email)
                 cb(null, resp)
             }
         })
 
-    }catch(err)
-    {
+    } catch (err) {
         logger.error("profileManage", err.message);
     }
 
 }
 
-module.exports = {getAllUsers,addUser }//   .getAllUsers = getAllUsers
+module.exports = { getAllUsers, addUser }//   .getAllUsers = getAllUsers

@@ -120,7 +120,7 @@ schema.pre('save', function(next) {
         return next(err);
   
       // hash the password using the new salt
-      bcrypt.hash(user.password, salt, function(err, hash) {
+      bcrypt.hash(user.password, 10, function(err, hash) {
         if (err)
           return next(err);
         // set the hashed password on the user
