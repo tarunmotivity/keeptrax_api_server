@@ -140,13 +140,6 @@ function addUser(body, cb) {
 
 }
 
-function searchUserByName(headers, cb) {
-    var query = {
-
-    }
-
-}
-
 module.exports.getAllUsers = getAllUsers;
 module.exports.updateUser = updateUser;
 module.exports.deleteUser = deleteUser;
