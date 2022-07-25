@@ -18,6 +18,22 @@ function getAllUsers(headers, cb) {
             manager_id: headers.managerid,
             organization: headers.organization
         }
+        if (headers.status && headers.status != null) {
+            query.status = headers.status
+        }
+        if (headers.search && headers.search != null) {
+            query.$or = [{
+                firstname: {
+                    "$regex": headers.search,
+                    "$options": 'i'
+                }
+            }, {
+                lastname: {
+                    "$regex": headers.search,
+                    "$options": 'i'
+                }
+            }]
+        }
         dbObj.getAll(User, query, (err, resp) => {
             if (err) {
                 logger.error("Error while getting all the users", err);
@@ -74,7 +90,7 @@ function deleteUser(headers, cb) {
                     if (err) {
                         cb(err)
                     } else {
-                        cb(null, {status:200 ,message :"User deleted susccessfully"})
+                        cb(null, { status: 200, message: "User deleted susccessfully" })
                     }
                 })
             } else {
@@ -86,7 +102,7 @@ function deleteUser(headers, cb) {
 
 }
 
-function addUser (body, cb) {
+function addUser(body, cb) {
     try {
 
         const password = Math.random().toString(36).slice(-10);
