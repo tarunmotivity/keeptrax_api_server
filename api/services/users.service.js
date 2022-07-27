@@ -111,10 +111,10 @@ function addUser (body, cb) {
         dbObj.save(model, (err, resp) => {
             if (err) {
                 logger.error("Error while addUser", err);
-                cb(err)
+                cb({ status: 400, message: err.message })
             } else {
                 email.welcomeMail(body.lastName, password, body.email)
-                cb(null, resp)
+                cb(null, {status:200,data:resp ,message :"User added susccessfully"})
             }
         })
 
