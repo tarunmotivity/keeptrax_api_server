@@ -107,28 +107,30 @@ schema.index({
     application: 1
 });
 
-schema.pre('save', function(next) {
+schema.pre('save',  function (next) {
     var user = this;
-    //logger.info(user);
-    // only hash the password if the user is new
     if (!user.isModified('password'))
-      return next();
-  
-    // generate salt
-    bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt) {
-      if (err)
-        return next(err);
-  
-      // hash the password using the new salt
-      bcrypt.hash(user.password, 10, function(err, hash) {
-        if (err)
-          return next(err);
-        // set the hashed password on the user
-        user.password = hash;
-        next();
-      });
-    });
-  });
-  
+        return next();
 
-module.exports = mongoose.model('Users', schema);
+    bcrypt.genSalt(SALT_WORK_FACTOR, function (err, salt) {
+        if (err)
+            return next(err);
+        bcrypt.hash(user.password, 10,async function (err, hash) {
+            if (err)
+                return next(err);
+            const email = await checkEmail(user.email);
+            if (email && email.email === user.email) {
+                next(new Error('Email already exists'));
+            } else {
+                user.password = hash;
+                next();
+            }
+        });
+    });
+});
+
+const UserSchema = mongoose.model('Users', schema);
+const checkEmail = async (email) => {
+    return await UserSchema.findOne({}).where('email').equals(email);
+}
+module.exports = UserSchema;

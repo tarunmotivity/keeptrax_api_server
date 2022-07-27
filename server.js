@@ -1,12 +1,17 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
+const cors = require('cors');
 
-var config = require('./config/config');
-var logger = config.getLogger('server.js');
+const config = require('./config/config');
+const logger = config.getLogger('server.js');
+const { authorizeUser } = require('./helper/authorization');
 
 const app = express()
 
+app.use(bodyParser.json());
+app.use(cors())
+app.use(authorizeUser);
 require('./api/routes/routes')(app)
 
 mongoose.connection.on("connected", function () {

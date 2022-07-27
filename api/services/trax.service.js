@@ -3,7 +3,6 @@ var UserPlaces = require('../models/userPlacesModel');
 var dbObj = require('../core/databaseFunction');
 
 function getAllTrax(headers, cb) {
-    console.log("headers--->", headers)
     var traxData = {}
     if (headers.startdate && headers.enddate && headers.userid) {
         var dbQuery = {
