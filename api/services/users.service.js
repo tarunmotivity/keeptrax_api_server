@@ -11,6 +11,8 @@ var TraxService = require("./trax.service");
 const email = require("./emailContant.service")
 var logger = config.getLogger(__filename);
 var CWD = process.cwd();
+const SALT_WORK_FACTOR = 10;
+const bcrypt = require('bcrypt');
 
 function getAllUsers(headers, cb) {
     if (headers.managerid && headers.organization && headers.managerid !== null) {
@@ -130,13 +132,54 @@ function addUser(body, cb) {
                 cb({ status: 400, message: err.message })
             } else {
                 email.welcomeMail(body.lastName, password, body.email)
-                cb(null, {status:200,data:resp ,message :"User added susccessfully"})
+                cb(null, { status: 200, data: resp, message: "User added susccessfully" })
             }
         })
 
     } catch (err) {
+        cb({ status: 400, message: err.message })
         logger.error("profileManage", err.message);
     }
+
+}
+
+function updatePassword(req, cb) {
+    try {
+        bcrypt.compare(req.body.currentPassword, req.user.password, function (err, result) {
+            if (result) {
+                bcrypt.hash(req.body.newPassword, 10, async function (err, hash) {
+                    if (err) {
+                        cb({ status: 400, message: err.message })
+                    } else {
+                        var updateObj = {
+                            password: hash
+                        }
+                        dbObj.update(User, updateObj, { email: req.user.email }, function (err, response) {
+                            if (err) {
+                                cb(err)
+                            } else {
+                                cb({ status: 200, data: response, message: "password updated susccessfully" })
+                                // cb(null, response)
+                            }
+                        })
+
+                    }
+                })
+
+            } else {
+                cb({ status: 400, message: "Current password doesn't match" })
+            }
+            // result == true
+        });
+        // console.log(req.body)
+        // console.log(req.user)
+
+
+    } catch (err) {
+        cb({ status: 400, message: err.message })
+        logger.error("profileManage", err.message);
+    }
+
 
 }
 
@@ -144,4 +187,5 @@ module.exports.getAllUsers = getAllUsers;
 module.exports.updateUser = updateUser;
 module.exports.deleteUser = deleteUser;
 module.exports.addUser = addUser;
+module.exports.updatePassword = updatePassword;
 

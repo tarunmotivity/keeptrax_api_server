@@ -15,7 +15,7 @@ module.exports.getAllUsers = (req, res) => {
 }
 
 module.exports.updateUser = (req, res) => {
-    UserService.updateUser(req.headers,req.body, (err, resp) => {
+    UserService.updateUser(req.headers, req.body, (err, resp) => {
         if (err) {
             res.send(err)
         } else {
@@ -35,11 +35,22 @@ module.exports.deleteUser = (req, res) => {
 }
 
 exports.addUser = (req, res) => {
-    UserService.addUser(req.body,(err, resp) => {
+    UserService.addUser(req.body, (err, resp) => {
         if (err) {
             res.send(err)
         } else {
             res.send(resp)
         }
     })
+}
+
+exports.updatePassword = (req,res) => {
+    UserService.updatePassword(req, (err, resp) => {
+        if (err) {
+            res.send(err)
+        } else {
+            res.send(resp)
+        }
+    })
+
 }
