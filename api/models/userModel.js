@@ -74,6 +74,10 @@ var schema = new Schema({
     oauth_provider: {
         type: String
     },
+    user_status: {
+        type: String,
+        default: "online"
+    },
     image_url: {
         type: String
     },
