@@ -21,7 +21,7 @@ function getAllUsers(headers, cb) {
             organization: headers.organization
         }
         if (headers.status && headers.status != null) {
-            query.status = headers.status
+            query.user_status = headers.status
         }
         if (headers.search && headers.search != null) {
             query.$or = [{
