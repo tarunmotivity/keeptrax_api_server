@@ -11,63 +11,98 @@ var TraxService = require("./trax.service");
 const email = require("./emailContant.service")
 var logger = config.getLogger(__filename);
 var CWD = process.cwd();
+const moment = require('moment');
 const SALT_WORK_FACTOR = 10;
 const bcrypt = require('bcrypt');
 
-function getAllUsers(headers, cb) {
-    if (headers.managerid && headers.organization && headers.managerid !== null) {
-        var query = {
-            manager_id: headers.managerid,
-            organization: headers.organization
+function getAllUsers(req, cb) {
+          var query = {
+            manager_id: req.user._id
         }
-        if (headers.status && headers.status != null) {
-            query.user_status = headers.status
-        }
-        if (headers.search && headers.search != null) {
-            query.$or = [{
-                firstname: {
-                    "$regex": headers.search,
-                    "$options": 'i'
-                }
-            }, {
-                lastname: {
-                    "$regex": headers.search,
-                    "$options": 'i'
-                }
-            }]
-        }
+    // if (headers.managerid && headers.organization && headers.managerid !== null) {
+    //     var query = {
+    //         manager_id: headers.managerid,
+    //         organization: headers.organization
+    //     }
+    //     if (headers.status && headers.status != null) {
+    //         query.user_status = headers.status
+    //     }
+    //     if (headers.search && headers.search != null) {
+    //         query.$or = [{
+    //             firstname: {
+    //                 "$regex": headers.search,
+    //                 "$options": 'i'
+    //             }
+    //         }, {
+    //             lastname: {
+    //                 "$regex": headers.search,
+    //                 "$options": 'i'
+    //             }
+    //         }]
+    //     }
         dbObj.getAll(User, query, (err, resp) => {
             if (err) {
                 logger.error("Error while getting all the users", err);
-                cb(err)
+                cb({ status: 400, message: err.message })
+                // cb(err)
             } else {
-                cb(null, resp)
+                cb(null, { status: 200, data: resp, message: "List" })
+                // cb(null, resp)
             }
         })
-    } else {
-        cb({ code: 404, error: "managerid and organizationid are required" })
-    }
+    // } else {
+    //     cb({ code: 404, error: "managerid and organizationid are required" })
+    // }
 
 }
 
-function updateUser(headers, userObj, cb) {
-    dbObj.getById(User, { email: headers.email }, function (error, userResp) {
+function updateUser(req, userObj, cb) {
+    if(!userObj.email)
+    {
+        return cb({ status: 400, message: "Email is required" })
+
+    }
+    dbObj.getById(User, { email: userObj.email }, function (error, userResp) {
         if (error) {
-            cb(error)
+            cb({ status: 400, message: "You are not eligible to update this user",error:error.message })
+            // cb(error)
         } else {
-            if (headers.managerid == userResp.manager_id) {
+            if(!userResp)
+            {
+                return cb({ status: 400, message: "Manager not matched" });        
+            }
+            if (req.user._id == userResp.manager_id) {
                 var updateObj = {
-                    firstname: userObj.firstName,
-                    lastname: userObj.lastName,
                     lastUpdatedOn: new Date(),
-                    gender: userObj.gender,
-                    birthDate: userObj.birthDate,
-                }
-                dbObj.update(User, updateObj, { email: headers.email }, function (err, response) {
+                };
+                if (userObj.activeStatus === false || userObj.activeStatus === true) {                    
+                        updateObj["activeStatus"] = userObj.activeStatus;
+                    }
+                    if(userObj.title){
+                        updateObj["title"] = userObj.title;
+                    }
+                    if(userObj.mobile){
+                        updateObj["mobile"] = userObj.mobile;
+                    }
+
+                    if(userObj.firstname){
+                        updateObj["lastname"] = userObj.firstname;
+                    }
+                    if(userObj.lastname){
+                        updateObj["lastname"] = userObj.lastname;
+                    }
+                    if(userObj.gender){
+                        updateObj["gender"] = userObj.gender;
+                    }
+                    if(userObj.birthDate){
+                        updateObj["birthDate"] = moment(userObj.birthDate).format('YYYY-MM-DD');
+                    }
+                dbObj.update(User, updateObj, { email: userObj.email }, function (err, response) {
                     if (err) {
-                        cb(err)
+                        cb({ status: 400, message: err.message })
+                        // cb(err)
                     } else {
-                        cb(null, response)
+                        cb(null, {status: 200, message: "User updated susccessfully" })
                     }
                 })
             } else {
@@ -109,29 +144,30 @@ function addUser(body, cb) {
 
         const password = Math.random().toString(36).slice(-10);
         var userPayload = {
-            birthDate: body.birthDate,
+            birthDate: moment(body.birthDate).format('YYYY-MM-DD'),
             email: body.email,
             mobile: body.mobile,
             title: body.title,
             tripId: body.tripId,
             password: password,
-            firstname: body.firstName,
-            lastname: body.lastName,
+            firstname: body.firstname,
+            lastname: body.lastname,
             organization: body.organization,
             application: body.application,
             lastUpdatedOn: new Date(),
             gender: body.gender,
             lockUntil: 0,
             role: body.role ? body.role : "USER",
-            oauth_id: body.oauth_id
-        }
+            oauth_id: body.oauth_id,
+            manager_id:body.manager_id
+        };
         var model = new User(userPayload)
         dbObj.save(model, (err, resp) => {
             if (err) {
                 logger.error("Error while addUser", err);
                 cb({ status: 400, message: err.message })
             } else {
-                email.welcomeMail(body.lastName, password, body.email)
+                email.welcomeMail(body.lastname, password, body.email)
                 cb(null, { status: 200, data: resp, message: "User added susccessfully" })
             }
         })
@@ -156,7 +192,8 @@ function updatePassword(req, cb) {
                         }
                         dbObj.update(User, updateObj, { email: req.user.email }, function (err, response) {
                             if (err) {
-                                cb(err)
+                                cb({ status: 400, message: err.message })
+                                // cb(err)
                             } else {
                                 cb({ status: 200, data: response, message: "password updated susccessfully" })
                                 // cb(null, response)
