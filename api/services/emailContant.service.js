@@ -33,7 +33,7 @@ exports.welcomeMail = (name,password,email) =>{
              <tr>
               <td align="center" style="padding: 20px 40px; font-family: 'Open Sans',Helvetica,Arial,sans-serif;font-size: 16px;line-height: 1.4;color: #333;">
                 <div align="left">Dear ${name} </div>
-                <div> Password is ${password}</div>
+                <div> Your password is ${password} .</div>
                 <div><br></div>
                 <div><br></div>
               </td>

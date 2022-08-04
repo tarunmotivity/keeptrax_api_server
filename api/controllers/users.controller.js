@@ -5,7 +5,7 @@ var logger = config.getLogger(__filename);
 
 
 module.exports.getAllUsers = (req, res) => {
-    UserService.getAllUsers(req.headers, (err, resp) => {
+    UserService.getAllUsers(req, (err, resp) => {
         if (err) {
             res.send(err)
         } else {
@@ -15,7 +15,7 @@ module.exports.getAllUsers = (req, res) => {
 }
 
 module.exports.updateUser = (req, res) => {
-    UserService.updateUser(req.headers, req.body, (err, resp) => {
+    UserService.updateUser(req, req.body, (err, resp) => {
         if (err) {
             res.send(err)
         } else {
@@ -35,7 +35,17 @@ module.exports.deleteUser = (req, res) => {
 }
 
 exports.addUser = (req, res) => {
-    UserService.addUser(req.body, (err, resp) => {
+   
+    const userPayload = {
+        ...req.body,
+        tripId: 1,
+        manager_id:req.user._id,
+        organization: req.user.organization,
+        application: req.user.application,
+        lockUntil: 0,
+        oauth_id: null
+    }
+    UserService.addUser(userPayload, (err, resp) => {
         if (err) {
             res.send(err)
         } else {
@@ -44,7 +54,7 @@ exports.addUser = (req, res) => {
     })
 }
 
-exports.updatePassword = (req,res) => {
+exports.updatePassword = (req, res) => {
     UserService.updatePassword(req, (err, resp) => {
         if (err) {
             res.send(err)
