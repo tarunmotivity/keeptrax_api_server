@@ -16,9 +16,9 @@ const SALT_WORK_FACTOR = 10;
 const bcrypt = require('bcrypt');
 
 function getAllUsers(req, cb) {
-          var query = {
-            manager_id: req.user._id
-        }
+    var query = {
+        manager_id: req.user._id
+    }
     // if (headers.managerid && headers.organization && headers.managerid !== null) {
     //     var query = {
     //         manager_id: headers.managerid,
@@ -40,16 +40,16 @@ function getAllUsers(req, cb) {
     //             }
     //         }]
     //     }
-        dbObj.getAll(User, query, (err, resp) => {
-            if (err) {
-                logger.error("Error while getting all the users", err);
-                cb({ status: 400, message: err.message })
-                // cb(err)
-            } else {
-                cb(null, { status: 200, data: resp, message: "List" })
-                // cb(null, resp)
-            }
-        })
+    dbObj.getAll(User, query, (err, resp) => {
+        if (err) {
+            logger.error("Error while getting all the users", err);
+            cb({ status: 400, message: err.message })
+            // cb(err)
+        } else {
+            cb(null, { status: 200, data: resp, message: "List" })
+            // cb(null, resp)
+        }
+    })
     // } else {
     //     cb({ code: 404, error: "managerid and organizationid are required" })
     // }
@@ -57,52 +57,53 @@ function getAllUsers(req, cb) {
 }
 
 function updateUser(req, userObj, cb) {
-    if(!userObj.email)
-    {
+    if (!userObj.email) {
         return cb({ status: 400, message: "Email is required" })
 
     }
     dbObj.getById(User, { email: userObj.email }, function (error, userResp) {
         if (error) {
-            cb({ status: 400, message: "You are not eligible to update this user",error:error.message })
+            cb({ status: 400, message: "You are not eligible to update this user", error: error.message })
             // cb(error)
         } else {
-            if(!userResp)
-            {
-                return cb({ status: 400, message: "Manager not matched" });        
+            if (!userResp) {
+                return cb({ status: 400, message: "Manager not matched" });
             }
             if (req.user._id == userResp.manager_id) {
                 var updateObj = {
                     lastUpdatedOn: new Date(),
                 };
-                if (userObj.activeStatus === false || userObj.activeStatus === true) {                    
-                        updateObj["activeStatus"] = userObj.activeStatus;
-                    }
-                    if(userObj.title){
-                        updateObj["title"] = userObj.title;
-                    }
-                    if(userObj.mobile){
-                        updateObj["mobile"] = userObj.mobile;
-                    }
+                if (userObj.activeStatus === false || userObj.activeStatus === true) {
+                    updateObj["activeStatus"] = userObj.activeStatus;
+                }
+                if (userObj.title) {
+                    updateObj["title"] = userObj.title;
+                }
+                if (userObj.mobile) {
+                    updateObj["mobile"] = userObj.mobile;
+                }
 
-                    if(userObj.firstname){
-                        updateObj["lastname"] = userObj.firstname;
-                    }
-                    if(userObj.lastname){
-                        updateObj["lastname"] = userObj.lastname;
-                    }
-                    if(userObj.gender){
-                        updateObj["gender"] = userObj.gender;
-                    }
-                    if(userObj.birthDate){
-                        updateObj["birthDate"] = moment(userObj.birthDate).format('YYYY-MM-DD');
-                    }
+                if (userObj.firstname) {
+                    updateObj["lastname"] = userObj.firstname;
+                }
+                if (userObj.lastname) {
+                    updateObj["lastname"] = userObj.lastname;
+                }
+                if (userObj.gender) {
+                    updateObj["gender"] = userObj.gender;
+                }
+                if (userObj.birthDate) {
+                    updateObj["birthDate"] = moment(userObj.birthDate).format('YYYY-MM-DD');
+                }
+                if (userObj.role) {
+                    updateObj["role"] = userObj.role;
+                }
                 dbObj.update(User, updateObj, { email: userObj.email }, function (err, response) {
                     if (err) {
                         cb({ status: 400, message: err.message })
                         // cb(err)
                     } else {
-                        cb(null, {status: 200, message: "User updated susccessfully" })
+                        cb(null, { status: 200, message: "User updated susccessfully" })
                     }
                 })
             } else {
@@ -159,7 +160,7 @@ function addUser(body, cb) {
             lockUntil: 0,
             role: body.role ? body.role : "USER",
             oauth_id: body.oauth_id,
-            manager_id:body.manager_id
+            manager_id: body.manager_id
         };
         var model = new User(userPayload)
         dbObj.save(model, (err, resp) => {
@@ -220,9 +221,28 @@ function updatePassword(req, cb) {
 
 }
 
+
+function getUserById(req,userObj, cb) {
+    dbObj.getById(User, { _id: userObj.id }, function (error, userResp) {
+        if (error) {
+            cb({ status: 400, message: "You are not eligible to update this user", error: error.message })
+            // cb(error)
+        } else {
+            if (!userResp) {
+                return cb({ status: 400, message: "Manager not matched" });
+            }
+            // if (req.user._id != userResp.manager_id) {
+            //     return cb({ status: 400, message: "your manager ID is not allowed " })
+            // }
+            cb(null, { status: 200, data: userResp })
+        }
+    });
+}
+
 module.exports.getAllUsers = getAllUsers;
 module.exports.updateUser = updateUser;
 module.exports.deleteUser = deleteUser;
 module.exports.addUser = addUser;
 module.exports.updatePassword = updatePassword;
+module.exports.getUserById = getUserById;
 
