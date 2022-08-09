@@ -2,8 +2,6 @@ var UserService = require('../services/users.service');
 var config = require('../../config/config');
 var logger = config.getLogger(__filename);
 
-
-
 module.exports.getAllUsers = (req, res) => {
     UserService.getAllUsers(req, (err, resp) => {
         if (err) {
@@ -63,4 +61,14 @@ exports.updatePassword = (req, res) => {
         }
     })
 
+}
+
+exports.getUserById = (req, res) => {
+    UserService.getUserById(req,req.params, (err, resp) => {
+        if (err) {
+            res.send(err)
+        } else {
+            res.send(resp)
+        }
+    })
 }
