@@ -29,3 +29,13 @@ module.exports.addAdmin = (req, res) => {
         }
     })
 }
+
+module.exports.addTeams = (req, res) => {
+    AdminService.addTeams(req, (err, resp) => {
+        if (err) {
+            res.send(err)
+        } else {
+            res.send(resp)
+        }
+    })
+}
