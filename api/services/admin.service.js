@@ -1,5 +1,6 @@
 var Organizations = require("../models/organizationModel");
 var Applications = require("../models/applicationModel");
+var TeamsModel = require('../models/teamsModel')
 var dbObj = require("../core/databaseFunction");
 var UserService = require("../services/users.service");
 var request = require("request");
@@ -121,6 +122,29 @@ function addAdmin(req, cb) {
   }
 }
 
+
+function addTeams(req, cb) {
+    var teamsObj = {
+        name: req.body.name,
+        organization: req.body.organization,
+        application: req.body.application,
+        adminId: req.body.adminId,
+        createdOn: new Date(),
+        lastUpdatedOn: new Date()
+    }
+    var model = new TeamsModel(teamsObj)
+    dbObj.save(model, function (err, response) {
+        if (err) {
+            cb({ status: 400, message: err.message })
+        } else {
+            cb(null, response)
+        }
+    })
+
+}
+
 module.exports.addAdmin = addAdmin;
 module.exports.addOrganization = addOrganization;
 module.exports.getOrganization = getOrganization;
+module.exports.addTeams = addTeams;
+
