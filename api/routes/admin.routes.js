@@ -7,5 +7,6 @@ var adminController = require('../controllers/admin.controller')
 router.route('/getAllOrganizations').get(adminController.getOrganization)
 router.route('/addAdmin').post(adminController.addAdmin)
 router.route('/addTeams').post(adminController.addTeams)
+router.route('/add/team/memebr').post(adminController.addTeamMember)
 
 module.exports = router;
