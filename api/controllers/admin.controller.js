@@ -39,6 +39,15 @@ module.exports.addTeams = (req, res) => {
         }
     })
 }
+module.exports.getTeams = (req, res) => {
+    AdminService.getTeams(req, (err, resp) => {
+        if (err) {
+            res.send(err)
+        } else {
+            res.send(resp)
+        }
+    })
+}
 
 module.exports.addTeamMember = (req, res) => {
     AdminService.addTeamMember(req, (err, resp) => {

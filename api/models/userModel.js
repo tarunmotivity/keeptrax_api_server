@@ -83,7 +83,9 @@ var schema = new Schema({
     },
     manager_id: {
         type: String
-
+    },
+    team_id:{
+        type: String
     },
     url: {
         type: String

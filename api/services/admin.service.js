@@ -145,9 +145,10 @@ function addTeamMember(req, cb) {
 function addTeams(req, cb) {
     var teamsObj = {
         name: req.body.name,
-        organization: req.body.organization,
-        application: req.body.application,
-        adminId: req.body.adminId,
+        organization: req.user.organization,
+        application: req.user.application,
+        adminId: req.user._id.toString(),
+        description: req.body.description,
         createdOn: new Date(),
         lastUpdatedOn: new Date()
     }
@@ -156,10 +157,64 @@ function addTeams(req, cb) {
         if (err) {
             cb({ status: 400, message: err.message })
         } else {
-            cb(null, response)
+            cb(null, {
+                status: 200,
+                message: "Team created successfully",
+              })
         }
     })
 
+}
+
+async function getTeams(req,cb) {
+    try{
+       const resp = await TeamsModel.aggregate([
+            { $match: {
+        organization: req.user.organization,
+        application: req.user.application
+             } },
+            {
+                "$project": {
+                  "_id": {
+                    "$toString": "$_id"
+                  },
+                  "name":"$name",
+                  "description":"$description",
+                  "organization":"$organization",
+                  "application":"$application",
+                  "adminId":"$adminId",
+                  "createdOn":"$createdOn",
+                  "lastUpdatedOn":"$lastUpdatedOn"
+                }
+              },
+                  {
+                    $lookup: {
+                      from: "users",
+                      localField: "_id",
+                      foreignField: "team_id",
+                      as: "users",
+                    },
+                  },
+                ]);
+                cb(null, { status: 200, data: resp, message: "List" })
+
+    }
+    catch(err)
+    {
+        cb({ status: 400, message: err.message })
+    }
+    //  dbObj.getAll(TeamsModel, {
+    //     organization: req.user.organization,
+    //     application: req.user.application
+    //  }, (err, resp) => {
+    //     if (err) {
+    //         logger.error("Error while getting all the users", err);
+    //         cb({ status: 400, message: err.message })
+    //     } else {
+    //         cb(null, { status: 200, data: resp, message: "List" })
+    //     }
+    // })
+    
 }
 
 module.exports.addAdmin = addAdmin;
@@ -167,4 +222,5 @@ module.exports.addOrganization = addOrganization;
 module.exports.getOrganization = getOrganization;
 module.exports.addTeams = addTeams;
 module.exports.addTeamMember = addTeamMember;
+module.exports.getTeams = getTeams;
 

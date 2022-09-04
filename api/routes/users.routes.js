@@ -9,6 +9,7 @@ router.route('/user').delete(userController.deleteUser)
 router.route('/user').post(userController.addUser);
 router.route('/updatePassword').put(userController.updatePassword);
 router.route('/user/:id').get(userController.getUserById);
+router.route('/getManagerUser').get(userController.getManagerUser);
 
 
 
