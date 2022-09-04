@@ -16,295 +16,307 @@ const SALT_WORK_FACTOR = 10;
 const bcrypt = require("bcrypt");
 
 async function getAllUsers(req, cb) {
-    try {
-        const query = {
-            manager_id: req.user._id.toString(),
-        };
-        const resp = await User.aggregate([
-            { $match: query },
-            {
-                $lookup: {
-                    from: "applications",
-                    localField: "application",
-                    foreignField: "_id",
-                    as: "application",
-                },
-            },
-            {
-                $lookup: {
-                    from: "organizations",
-                    localField: "organization",
-                    foreignField: "_id",
-                    as: "organization",
-                },
-            },
-        ]);
-        cb(null, { status: 200, data: resp, message: "List" });
-    } catch (err) {
-        cb({ status: 400, message: err.message });
-    }
+  try {
+    const query = {
+      manager_id: req.user._id.toString(),
+    };
+    const resp = await User.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: "applications",
+          localField: "application",
+          foreignField: "_id",
+          as: "application",
+        },
+      },
+      {
+        $lookup: {
+          from: "organizations",
+          localField: "organization",
+          foreignField: "_id",
+          as: "organization",
+        },
+      },
+    ]);
+    cb(null, { status: 200, data: resp, message: "List" });
+  } catch (err) {
+    cb({ status: 400, message: err.message });
+  }
 
-    // if (headers.managerid && headers.organization && headers.managerid !== null) {
-    //     var query = {
-    //         manager_id: headers.managerid,
-    //         organization: headers.organization
-    //     }
-    //     if (headers.status && headers.status != null) {
-    //         query.user_status = headers.status
-    //     }
-    //     if (headers.search && headers.search != null) {
-    //         query.$or = [{
-    //             firstname: {
-    //                 "$regex": headers.search,
-    //                 "$options": 'i'
-    //             }
-    //         }, {
-    //             lastname: {
-    //                 "$regex": headers.search,
-    //                 "$options": 'i'
-    //             }
-    //         }]
-    //     }
-    // dbObj.getAll(User, query, (err, resp) => {
-    //     if (err) {
-    //         logger.error("Error while getting all the users", err);
-    //         cb({ status: 400, message: err.message })
-    //         // cb(err)
-    //     } else {
-    //         cb(null, { status: 200, data: resp, message: "List" })
-    //         // cb(null, resp)
-    //     }
-    // })
-    // } else {
-    //     cb({ code: 404, error: "managerid and organizationid are required" })
-    // }
+  // if (headers.managerid && headers.organization && headers.managerid !== null) {
+  //     var query = {
+  //         manager_id: headers.managerid,
+  //         organization: headers.organization
+  //     }
+  //     if (headers.status && headers.status != null) {
+  //         query.user_status = headers.status
+  //     }
+  //     if (headers.search && headers.search != null) {
+  //         query.$or = [{
+  //             firstname: {
+  //                 "$regex": headers.search,
+  //                 "$options": 'i'
+  //             }
+  //         }, {
+  //             lastname: {
+  //                 "$regex": headers.search,
+  //                 "$options": 'i'
+  //             }
+  //         }]
+  //     }
+  // dbObj.getAll(User, query, (err, resp) => {
+  //     if (err) {
+  //         logger.error("Error while getting all the users", err);
+  //         cb({ status: 400, message: err.message })
+  //         // cb(err)
+  //     } else {
+  //         cb(null, { status: 200, data: resp, message: "List" })
+  //         // cb(null, resp)
+  //     }
+  // })
+  // } else {
+  //     cb({ code: 404, error: "managerid and organizationid are required" })
+  // }
 }
 
 function updateUser(req, userObj, cb) {
-    if (!userObj.email) {
-        return cb({ status: 400, message: "Email is required" });
-    }
-    dbObj.getById(User, { email: userObj.email }, function (error, userResp) {
-        if (error) {
-            cb({
-                status: 400,
-                message: "You are not eligible to update this user",
-                error: error.message,
-            });
-            // cb(error)
-        } else {
-            if (!userResp) {
-                return cb({ status: 400, message: "Manager not matched" });
-            }
-            if (req.user._id == userResp.manager_id) {
-                var updateObj = {
-                    lastUpdatedOn: new Date(),
-                };
-                if (userObj.activeStatus === false || userObj.activeStatus === true) {
-                    updateObj["activeStatus"] = userObj.activeStatus;
-                }
-                if (userObj.title) {
-                    updateObj["title"] = userObj.title;
-                }
-                if (userObj.mobile) {
-                    updateObj["mobile"] = userObj.mobile;
-                }
-
-                if (userObj.firstname) {
-                    updateObj["lastname"] = userObj.firstname;
-                }
-                if (userObj.lastname) {
-                    updateObj["lastname"] = userObj.lastname;
-                }
-                if (userObj.gender) {
-                    updateObj["gender"] = userObj.gender;
-                }
-                if (userObj.birthDate) {
-                    updateObj["birthDate"] = moment(userObj.birthDate).format(
-                        "YYYY-MM-DD"
-                    );
-                }
-                if (userObj.role) {
-                    updateObj["role"] = userObj.role;
-                }
-                const role = req.user.role;
-                if (role && role == "SUPERADMIN") {
-                    if (userObj.organization) {
-                        updateObj["organization"] = userObj.organization;
-                    }
-                    if (userObj.application) {
-                        updateObj["application"] = userObj.application;
-                    }
-                }
-                if (role && (role == "ADMIN" || role == "SUPERADMIN")) {
-                    if (userObj.teamId) {
-                        updateObj.teamId = userObj.teamId;
-                    }
-                }
-
-
-                dbObj.update(
-                    User,
-                    updateObj,
-                    { email: userObj.email },
-                    function (err, response) {
-                        if (err) {
-                            cb({ status: 400, message: err.message });
-                            // cb(err)
-                        } else {
-                            cb(null, { status: 200, message: "User updated susccessfully" });
-                        }
-                    }
-                );
-            } else {
-                cb({
-                    status: 400,
-                    message: "You are not eligible to update this user",
-                });
-            }
+  if (!userObj.email) {
+    return cb({ status: 400, message: "Email is required" });
+  }
+  dbObj.getById(User, { email: userObj.email }, function (error, userResp) {
+    if (error) {
+      cb({
+        status: 400,
+        message: "You are not eligible to update this user",
+        error: error.message,
+      });
+      // cb(error)
+    } else {
+      if (!userResp) {
+        return cb({ status: 400, message: "Manager not matched" });
+      }
+      if (req.user._id == userResp.manager_id || req.user.team_id === userResp.team_id) {
+        var updateObj = {
+          lastUpdatedOn: new Date(),
+        };
+        if (userObj.activeStatus === false || userObj.activeStatus === true) {
+          updateObj["activeStatus"] = userObj.activeStatus;
         }
-    });
+        if (userObj.title) {
+          updateObj["title"] = userObj.title;
+        }
+        if (userObj.mobile) {
+          updateObj["mobile"] = userObj.mobile;
+        }
+
+        if (userObj.firstname) {
+          updateObj["lastname"] = userObj.firstname;
+        }
+        if (userObj.lastname) {
+          updateObj["lastname"] = userObj.lastname;
+        }
+        if (userObj.gender) {
+          updateObj["gender"] = userObj.gender;
+        }
+        if (userObj.birthDate) {
+          updateObj["birthDate"] = moment(userObj.birthDate).format(
+            "YYYY-MM-DD"
+          );
+        }
+        if (userObj.role) {
+          updateObj["role"] = userObj.role;
+        }
+        const role = req.user.role;
+        if (role && role == "SUPERADMIN") {
+          if (userObj.organization) {
+            updateObj["organization"] = userObj.organization;
+          }
+          if (userObj.application) {
+            updateObj["application"] = userObj.application;
+          }
+        }
+        if (role && role == "ADMIN") {
+          if (userObj.team_id) {
+            updateObj.team_id = userObj.team_id;
+          }
+        }
+
+        dbObj.update(
+          User,
+          updateObj,
+          { email: userObj.email },
+          function (err, response) {
+            if (err) {
+              cb({ status: 400, message: err.message });
+              // cb(err)
+            } else {
+              cb(null, { status: 200, message: "User updated susccessfully" });
+            }
+          }
+        );
+      } else {
+        cb({
+          status: 400,
+          message: "You are not eligible to update this user",
+        });
+      }
+    }
+  });
 }
 
 function deleteUser(headers, cb) {
-    dbObj.getById(User, { email: headers.email }, function (error, userResp) {
-        if (error) {
-            cb(error);
-        } else {
-            if (headers.managerid == userResp.manager_id) {
-                var updateObj = {
-                    manager_id: null,
-                };
-                dbObj.update(
-                    User,
-                    updateObj,
-                    { email: headers.email },
-                    function (err, response) {
-                        if (err) {
-                            cb(err);
-                        } else {
-                            cb(null, { status: 200, message: "User deleted susccessfully" });
-                        }
-                    }
-                );
+  dbObj.getById(User, { email: headers.email }, function (error, userResp) {
+    if (error) {
+      cb(error);
+    } else {
+      if (headers.managerid == userResp.manager_id) {
+        var updateObj = {
+          manager_id: null,
+        };
+        dbObj.update(
+          User,
+          updateObj,
+          { email: headers.email },
+          function (err, response) {
+            if (err) {
+              cb(err);
             } else {
-                cb({
-                    status: 400,
-                    message: "You are not eligible to delete this user",
-                });
+              cb(null, { status: 200, message: "User deleted susccessfully" });
             }
-        }
-    });
+          }
+        );
+      } else {
+        cb({
+          status: 400,
+          message: "You are not eligible to delete this user",
+        });
+      }
+    }
+  });
 }
 
 function addUser(body, cb) {
-    try {
-        const password = Math.random().toString(36).slice(-10);
-        var userPayload = {
-            birthDate: moment(body.birthDate).format("YYYY-MM-DD"),
-            email: body.email,
-            mobile: body.mobile,
-            title: body.title,
-            tripId: body.tripId,
-            password: password,
-            firstname: body.firstname,
-            lastname: body.lastname,
-            organization: body.organization,
-            application: body.application,
-            lastUpdatedOn: new Date(),
-            gender: body.gender,
-            lockUntil: 0,
-            role: body.role ? body.role : "USER",
-            oauth_id: body.oauth_id,
-            manager_id: body.manager_id,
-        };
-        var model = new User(userPayload);
-        dbObj.save(model, (err, resp) => {
-            if (err) {
-                logger.error("Error while addUser", err);
-                cb({ status: 400, message: err.message });
-            } else {
-                email.welcomeMail(body.lastname, password, body.email);
-                cb(null, {
-                    status: 200,
-                    data: resp,
-                    message: "User added susccessfully",
-                });
-            }
-        });
-    } catch (err) {
+  try {
+    const password = Math.random().toString(36).slice(-10);
+    var userPayload = {
+      birthDate: moment(body.birthDate).format("YYYY-MM-DD"),
+      email: body.email,
+      team_id: body.team_id || "",
+      mobile: body.mobile,
+      title: body.title,
+      tripId: body.tripId,
+      password: password,
+      firstname: body.firstname,
+      lastname: body.lastname,
+      organization: body.organization,
+      application: body.application,
+      lastUpdatedOn: new Date(),
+      gender: body.gender,
+      lockUntil: 0,
+      role: body.role ? body.role : "USER",
+      oauth_id: body.oauth_id,
+      manager_id: body.manager_id,
+    };
+    var model = new User(userPayload);
+    dbObj.save(model, (err, resp) => {
+      if (err) {
+        logger.error("Error while addUser", err);
         cb({ status: 400, message: err.message });
-        logger.error("profileManage", err.message);
-    }
+      } else {
+        email.welcomeMail(body.lastname, password, body.email);
+        cb(null, {
+          status: 200,
+          data: resp,
+          message: "User added susccessfully",
+        });
+      }
+    });
+  } catch (err) {
+    cb({ status: 400, message: err.message });
+    logger.error("profileManage", err.message);
+  }
 }
 
 function updatePassword(req, cb) {
-    try {
-        bcrypt.compare(
-            req.body.currentPassword,
-            req.user.password,
-            function (err, result) {
-                if (result) {
-                    bcrypt.hash(req.body.newPassword, 10, async function (err, hash) {
-                        if (err) {
-                            cb({ status: 400, message: err.message });
-                        } else {
-                            var updateObj = {
-                                password: hash,
-                            };
-                            dbObj.update(
-                                User,
-                                updateObj,
-                                { email: req.user.email },
-                                function (err, response) {
-                                    if (err) {
-                                        cb({ status: 400, message: err.message });
-                                        // cb(err)
-                                    } else {
-                                        cb({
-                                            status: 200,
-                                            data: response,
-                                            message: "password updated susccessfully",
-                                        });
-                                        // cb(null, response)
-                                    }
-                                }
-                            );
-                        }
+  try {
+    bcrypt.compare(
+      req.body.currentPassword,
+      req.user.password,
+      function (err, result) {
+        if (result) {
+          bcrypt.hash(req.body.newPassword, 10, async function (err, hash) {
+            if (err) {
+              cb({ status: 400, message: err.message });
+            } else {
+              var updateObj = {
+                password: hash,
+              };
+              dbObj.update(
+                User,
+                updateObj,
+                { email: req.user.email },
+                function (err, response) {
+                  if (err) {
+                    cb({ status: 400, message: err.message });
+                    // cb(err)
+                  } else {
+                    cb({
+                      status: 200,
+                      data: response,
+                      message: "password updated susccessfully",
                     });
-                } else {
-                    cb({ status: 400, message: "Current password doesn't match" });
+                    // cb(null, response)
+                  }
                 }
-                // result == true
+              );
             }
-        );
-        // console.log(req.body)
-        // console.log(req.user)
-    } catch (err) {
-        cb({ status: 400, message: err.message });
-        logger.error("profileManage", err.message);
-    }
+          });
+        } else {
+          cb({ status: 400, message: "Current password doesn't match" });
+        }
+        // result == true
+      }
+    );
+    // console.log(req.body)
+    // console.log(req.user)
+  } catch (err) {
+    cb({ status: 400, message: err.message });
+    logger.error("profileManage", err.message);
+  }
 }
 
 function getUserById(req, userObj, cb) {
-    dbObj.getById(User, { _id: userObj.id }, function (error, userResp) {
-        if (error) {
-            cb({
-                status: 400,
-                message: "You are not eligible to update this user",
-                error: error.message,
-            });
-            // cb(error)
-        } else {
-            if (!userResp) {
-                return cb({ status: 400, message: "Manager not matched" });
-            }
-            // if (req.user._id != userResp.manager_id) {
-            //     return cb({ status: 400, message: "your manager ID is not allowed " })
-            // }
-            cb(null, { status: 200, data: userResp });
-        }
-    });
+  dbObj.getById(User, { _id: userObj.id }, function (error, userResp) {
+    if (error) {
+      cb({
+        status: 400,
+        message: "You are not eligible to update this user",
+        error: error.message,
+      });
+      // cb(error)
+    } else {
+      if (!userResp) {
+        return cb({ status: 400, message: "Manager not matched" });
+      }
+      // if (req.user._id != userResp.manager_id) {
+      //     return cb({ status: 400, message: "your manager ID is not allowed " })
+      // }
+      cb(null, { status: 200, data: userResp });
+    }
+  });
+}
+
+async function getManagerUser(req, cb) {
+  try {
+    const resp = await User.find({
+      team_id: req.user.team_id,
+      role: "USER",
+    }).sort({ _id: -1 });
+    cb(null, { status: 200, data: resp, message: "List-kk" });
+} catch (err) {
+  cb({ status: 400, message: err.message });
+}
 }
 
 module.exports.getAllUsers = getAllUsers;
@@ -313,3 +325,4 @@ module.exports.deleteUser = deleteUser;
 module.exports.addUser = addUser;
 module.exports.updatePassword = updatePassword;
 module.exports.getUserById = getUserById;
+module.exports.getManagerUser = getManagerUser;

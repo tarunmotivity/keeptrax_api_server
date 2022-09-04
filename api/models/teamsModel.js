@@ -7,6 +7,10 @@ var schema = new Schema({
         required: true,
         unique: true
     },
+    description: {
+        type: String,
+        required: true
+    },
     organization: {
         type: Schema.Types.ObjectId,
         ref: 'Organizations',
