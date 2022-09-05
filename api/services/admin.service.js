@@ -124,7 +124,7 @@ function addAdmin(req, cb) {
 
 function addTeamMember(req, cb) {
     var role = req.user.role;
-    if (role && role == "ADMIN"||role && role == "SUPERADMIN") {
+    if (role && role == "ADMIN" || role && role == "SUPERADMIN") {
         var updateObj = {
             teamId: req.body.teamId,
             email: req.body.email
@@ -160,47 +160,48 @@ function addTeams(req, cb) {
             cb(null, {
                 status: 200,
                 message: "Team created successfully",
-              })
+            })
         }
     })
 
 }
 
-async function getTeams(req,cb) {
-    try{
-       const resp = await TeamsModel.aggregate([
-            { $match: {
-        organization: req.user.organization,
-        application: req.user.application
-             } },
+async function getTeams(req, cb) {
+    try {
+        const resp = await TeamsModel.aggregate([
+            {
+                $match: {
+                    organization: req.user.organization,
+                    application: req.user.application
+                }
+            },
             {
                 "$project": {
-                  "_id": {
-                    "$toString": "$_id"
-                  },
-                  "name":"$name",
-                  "description":"$description",
-                  "organization":"$organization",
-                  "application":"$application",
-                  "adminId":"$adminId",
-                  "createdOn":"$createdOn",
-                  "lastUpdatedOn":"$lastUpdatedOn"
-                }
-              },
-                  {
-                    $lookup: {
-                      from: "users",
-                      localField: "_id",
-                      foreignField: "team_id",
-                      as: "users",
+                    "_id": {
+                        "$toString": "$_id"
                     },
-                  },
-                ]);
-                cb(null, { status: 200, data: resp, message: "List" })
+                    "name": "$name",
+                    "description": "$description",
+                    "organization": "$organization",
+                    "application": "$application",
+                    "adminId": "$adminId",
+                    "createdOn": "$createdOn",
+                    "lastUpdatedOn": "$lastUpdatedOn"
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "_id",
+                    foreignField: "team_id",
+                    as: "users",
+                },
+            },
+        ]);
+        cb(null, { status: 200, data: resp, message: "List" })
 
     }
-    catch(err)
-    {
+    catch (err) {
         cb({ status: 400, message: err.message })
     }
     //  dbObj.getAll(TeamsModel, {
@@ -214,7 +215,141 @@ async function getTeams(req,cb) {
     //         cb(null, { status: 200, data: resp, message: "List" })
     //     }
     // })
-    
+
+}
+
+function updateOrganization(req, cb) {
+    var role = req.user.role;
+    if (role && role == "SUPERADMIN") {
+        dbObj.getById(Organizations, { _id: req.query.orgid }, function (error, orgResp) {
+            if (error) {
+                cb({
+                    status: 400,
+                    message: "Oragnization not found",
+                    error: error.message,
+                });
+            } else {
+                if (!orgResp) {
+                    return cb({ status: 400, message: "Oragnization not matched" });
+                }
+                var updateObj = {
+                    lastUpdatedOn: new Date(),
+                };
+                if (req.body.name) {
+                    updateObj.name = req.body.name
+                }
+                if (req.body.website) {
+                    updateObj.website = req.body.website
+                }
+
+                dbObj.update(
+                    Organizations,
+                    updateObj,
+                    { _id: req.query.orgid },
+                    function (err, response) {
+                        if (err) {
+                            cb({ status: 400, message: err.message });
+                            // cb(err)
+                        } else {
+                            cb(null, { status: 200, message: "Organization updated susccessfully" });
+                        }
+                    }
+                );
+
+            }
+        });
+    } else {
+        cb({ status: 400, message: "user is not a superadmin" });
+    }
+}
+
+function updateApplication(req, cb) {
+    var role = req.user.role;
+    if (role && role == "SUPERADMIN") {
+        dbObj.getById(Applications, { _id: req.query.appid }, function (error, appResp) {
+            if (error) {
+                cb({
+                    status: 400,
+                    message: "Application not found",
+                    error: error.message,
+                });
+            } else {
+                if (!appResp) {
+                    return cb({ status: 400, message: "Application not matched" });
+                }
+                var updateObj = {
+                    lastUpdatedOn: new Date(),
+                };
+                if (req.body.name) {
+                    updateObj.name = req.body.name
+                }
+                if (req.body.description) {
+                    updateObj.description = req.body.description
+                }
+
+                dbObj.update(
+                    Applications,
+                    updateObj,
+                    { _id: req.query.appid },
+                    function (err, response) {
+                        if (err) {
+                            cb({ status: 400, message: err.message });
+                            // cb(err)
+                        } else {
+                            cb(null, { status: 200, message: "Application updated susccessfully" });
+                        }
+                    }
+                );
+
+            }
+        });
+    } else {
+        cb({ status: 400, message: "user is not a superadmin" });
+    }
+}
+
+function updateTeam(req, cb) {
+    var role = req.user.role;
+    if (role && role == "ADMIN") {
+        dbObj.getById(TeamsModel, { _id: req.query.teamid }, function (error, teamResp) {
+            if (error) {
+                cb({
+                    status: 400,
+                    message: "Team not found",
+                    error: error.message,
+                });
+            } else {
+                if (!teamResp) {
+                    return cb({ status: 400, message: "Team not matched" });
+                }
+                var updateObj = {
+                    lastUpdatedOn: new Date(),
+                };
+                if (req.body.name) {
+                    updateObj.name = req.body.name
+                }
+                if (req.body.description) {
+                    updateObj.description = req.body.description
+                }
+
+                dbObj.update(
+                    TeamsModel,
+                    updateObj,
+                    { _id: req.query.teamid },
+                    function (err, response) {
+                        if (err) {
+                            cb({ status: 400, message: err.message });
+                        } else {
+                            cb(null, { status: 200, message: "Team updated susccessfully" });
+                        }
+                    }
+                );
+
+            }
+        });
+    } else {
+        cb({ status: 400, message: "user is not a admin" });
+    }
 }
 
 module.exports.addAdmin = addAdmin;
@@ -223,4 +358,6 @@ module.exports.getOrganization = getOrganization;
 module.exports.addTeams = addTeams;
 module.exports.addTeamMember = addTeamMember;
 module.exports.getTeams = getTeams;
-
+module.exports.updateOrganization = updateOrganization;
+module.exports.updateApplication = updateApplication;
+module.exports.updateTeam = updateTeam;

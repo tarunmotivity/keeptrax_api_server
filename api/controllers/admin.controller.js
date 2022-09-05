@@ -58,3 +58,33 @@ module.exports.addTeamMember = (req, res) => {
         }
     })
 }
+
+module.exports.updateOrganization = (req, res) => {
+    AdminService.updateOrganization(req, (err, resp) => {
+        if (err) {
+            res.send(err)
+        } else {
+            res.send(resp)
+        }
+    })
+}
+
+module.exports.updateApplication = (req, res) => {
+    AdminService.updateApplication(req, (err, resp) => {
+        if (err) {
+            res.send(err)
+        } else {
+            res.send(resp)
+        }
+    })
+}
+
+module.exports.updateTeam = (req, res) => {
+    AdminService.updateTeam(req, (err, resp) => {
+        if (err) {
+            res.send(err)
+        } else {
+            res.send(resp)
+        }
+    })
+}
