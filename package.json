@@ -4,6 +4,7 @@
   "description": "keeptrax _api_server",
   "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -13,6 +14,7 @@
     "bcrypt": "^5.0.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "ejs": "^3.1.8",
     "express": "^4.18.1",
     "googlemaps": "^1.1.3",

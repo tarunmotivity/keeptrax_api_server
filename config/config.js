@@ -1,51 +1,27 @@
 var logger4js = require('log4js');
 
-module.exports.port = 3010 || process.env.applicationPort
-module.exports.environment = "dev" || process.env.environment
-module.exports.dbUri = "mongodb://52.34.148.49:27017/qa?retryWrites=true&w=majority"
-// module.exports.dbUri = "mongodb://localhost:27017/qa?retryWrites=true&w=majority"
+module.exports.port = process.env.PORT || 3010;
+module.exports.environment = process.env.ENVIRONMENT || "dev";
 
+module.exports.dbUri = process.env.MONGO_URI;
 
 module.exports.options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     authSource: "admin",
     auth: {
-        username: 'myUserAdmin', password: 'KeepTrax123'
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD
     }
-}
+};
+
 module.exports.smtpConfig = {
-    host: 'email-smtp.us-west-2.amazonaws.com',
-    port: 587,
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
     auth: {
-        user: 'AKIA6H4KE3HURCERT2XP',
-        pass: 'BGfJoJzQe4UQunVSutsntrpwmW/CyWXXXiWx4gCuNwkm'
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
     }
-}
+};
 
-module.exports.sender='userverify-noreply@keeptraxapp.com',
-
-
-logger4js.configure({
-    appenders: {
-        app: {
-            type: "file",
-            filename: "./logs/app.log"
-        },
-        out: {
-            "type": "stdout"
-        },
-    },
-    categories: {
-        default: {
-            appenders: ["app", "out"],
-            level: "error"
-        }
-    }
-})
-
-module.exports.getLogger = (name) => {
-    let data = logger4js.getLogger(name || 'logs')
-    data.level = 'debug'
-    return data
-}
+module.exports.sender = process.env.SENDER_EMAIL;
