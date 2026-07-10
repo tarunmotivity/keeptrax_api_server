@@ -25,3 +25,27 @@ module.exports.smtpConfig = {
 };
 
 module.exports.sender = process.env.SENDER_EMAIL;
+
+logger4js.configure({
+    appenders: {
+        app: {
+            type: "file",
+            filename: "./logs/app.log"
+        },
+        out: {
+            type: "stdout"
+        }
+    },
+    categories: {
+        default: {
+            appenders: ["app", "out"],
+            level: "error"
+        }
+    }
+});
+
+module.exports.getLogger = (name) => {
+    let data = logger4js.getLogger(name || "logs");
+    data.level = "debug";
+    return data;
+};
