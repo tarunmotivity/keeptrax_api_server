@@ -88,3 +88,79 @@ exports.getManagerUser = (req, res) => {
     }
   });
 };
+
+exports.getBookmarks = (req, res) => {
+    UserService.getBookmarks(req.params.id, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};
+
+exports.createShare = (req, res) => {
+    UserService.createShare(req, req.body, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};
+
+exports.getShares = (req, res) => {
+    UserService.getShares(req.params.id, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};
+exports.getProfile = (req, res) => {
+    UserService.getProfile(req.params.id, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};
+
+exports.updateProfile = (req, res) => {
+    UserService.updateProfile(req.params.id, req.body, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};
+exports.logout = (req, res) => {
+    UserService.logout(req.params.id, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};
+exports.getCategories = (req, res) => {
+    UserService.getCategories((err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};
+exports.createBookmark = (req, res) => {
+    UserService.createBookmark(req.params.id, req.body, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};

@@ -14,6 +14,8 @@ var CWD = process.cwd();
 const moment = require("moment");
 const SALT_WORK_FACTOR = 10;
 const bcrypt = require("bcrypt");
+const Share = require('../models/shareModel');
+const Trip = require('../models/tripModel');
 
 async function getAllUsers(req, cb) {
   try {
@@ -314,11 +316,246 @@ async function getManagerUser(req, cb) {
       role: "USER",
     }).sort({ _id: -1 });
     cb(null, { status: 200, data: resp, message: "List-kk" });
-} catch (err) {
-  cb({ status: 400, message: err.message });
-}
+  } catch (err) {
+    cb({ status: 400, message: err.message });
+  }
 }
 
+async function getBookmarks(userId, cb) {
+
+    try {
+
+        const trips = await Trip.find({
+            account: userId
+        }).sort({ createdOn: -1 });
+
+        const bookmarks = trips.map(item => ({
+            id: item._id,
+            name: item.name,
+            startTime: item.startTime,
+            endTime: item.endTime
+        }));
+
+        cb(null, { bookmarks });
+
+    } catch (err) {
+        cb(err);
+    }
+
+}
+
+async function createShare(req, payload, cb) {
+
+    try {
+
+        const share = new Share({
+
+            sender: req.params.id,
+
+            organization: req.user.organization,
+
+            bookmark: payload.bookmark || null,
+
+            recipients: payload.recipients || [],
+
+            name: payload.name,
+
+            type: payload.type,
+
+            isAlwaysOn: payload.isAlwaysOn,
+
+            isSharingImages: payload.isSharingImages,
+
+            expiresAt: new Date(Date.now() + Number(payload.expiresAt)),
+
+            expiresAtInMilliSeconds: Number(payload.expiresAt),
+
+            createdOn: new Date(),
+
+            lastupdatedOn: new Date(),
+
+            views: []
+
+        });
+
+        const response = await share.save();
+
+        cb(null, response);
+
+    } catch (err) {
+
+        cb({
+            status: 400,
+            message: err.message
+        });
+
+    }
+
+}
+
+async function getShares(userId, cb) {
+
+    try {
+
+        const sent = await Share.find({
+            sender: userId
+        })
+        .populate("bookmark")
+        .lean();
+
+        const user = await User.findById(userId);
+
+        const received = await Share.find({
+            "recipients.email": user.email
+        })
+        .populate("sender")
+        .populate("bookmark")
+        .lean();
+
+        cb(null, {
+            sent,
+            received
+        });
+
+    } catch (err) {
+
+        cb(err);
+
+    }
+
+}
+
+async function getProfile(userId, cb) {
+
+    try {
+
+        const user = await User.findById(userId).lean();
+
+        if (!user) {
+            return cb({
+                status: 404,
+                message: "User not found"
+            });
+        }
+
+        cb(null, user);
+
+    } catch (err) {
+
+        cb({
+            status: 400,
+            message: err.message
+        });
+
+    }
+
+}
+
+async function updateProfile(userId, body, cb) {
+
+    try {
+
+        await User.findByIdAndUpdate(
+            userId,
+            {
+                firstname: body.firstname,
+                lastname: body.lastname,
+                mobile: body.mobile,
+                birthDate: body.birthDate,
+                gender: body.gender,
+                lastUpdatedOn: new Date()
+            }
+        );
+
+        cb(null, {
+            message: "Profile updated successfully"
+        });
+
+    } catch (err) {
+
+        cb({
+            status: 400,
+            message: err.message
+        });
+
+    }
+
+}
+
+async function logout(userId, cb) {
+    try {
+        cb(null, {
+            status: 200,
+            logoutstatus: true,
+            message: "Logged out successfully"
+        });
+    } catch (err) {
+        cb({
+            status: 400,
+            message: err.message
+        });
+    }
+}
+async function getCategories(cb) {
+
+    const categories = [
+
+        { _id: 1, internalCat: "Restaurant" },
+        { _id: 2, internalCat: "Hotel" },
+        { _id: 3, internalCat: "Cafe" },
+        { _id: 4, internalCat: "Office" },
+        { _id: 5, internalCat: "Home" },
+        { _id: 6, internalCat: "Shopping" },
+        { _id: 7, internalCat: "Hospital" },
+        { _id: 8, internalCat: "School" },
+        { _id: 9, internalCat: "Airport" },
+        { _id: 10, internalCat: "Gym" },
+        { _id: 11, internalCat: "Other" }
+
+    ];
+
+    cb(null, categories);
+
+}
+async function createBookmark(userId, payload, cb) {
+
+    try {
+
+        const trip = new Trip({
+            account: userId,
+            name: payload.name,
+            startTime: new Date(Number(payload.startTime)),
+            endTime: new Date(Number(payload.endTime)),
+            createdOn: new Date(),
+            lastUpdatedOn: new Date()
+        });
+
+        const response = await trip.save();
+
+        cb(null, {
+            status: 200,
+            response,
+            message: "Bookmark created successfully"
+        });
+
+    } catch (err) {
+
+        cb({
+            status: 400,
+            message: err.message
+        });
+
+    }
+
+}
+module.exports.createBookmark = createBookmark;
+module.exports.getCategories = getCategories;
+module.exports.logout = logout;
+module.exports.getProfile = getProfile;
+module.exports.updateProfile = updateProfile;
+module.exports.getShares = getShares;
+module.exports.createShare = createShare;
+module.exports.getBookmarks = getBookmarks;
 module.exports.getAllUsers = getAllUsers;
 module.exports.updateUser = updateUser;
 module.exports.deleteUser = deleteUser;

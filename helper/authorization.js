@@ -3,6 +3,14 @@ const User = require('../api/models/userModel');
 const organization = require('../api/models/organizationModel');
 
 exports.authorizeUser = (req, res, next) => {
+    if (
+        req.originalUrl === "/api/v2.0.1/users/login" ||
+        req.originalUrl === "/api/v2.0.1/users/signup" ||
+        req.originalUrl === "/api/v2.0.1/data"
+    ) {
+        return next();
+    }
+
     const basicheaders = req.headers['basic'];
     const apiKey = req.headers['apiKey'] || req.headers['apikey'];
     if (!basicheaders || !apiKey) {

@@ -26,3 +26,12 @@ module.exports.getOrganizations = (req, res) => {
         }
     })
 }
+module.exports.login = (req, res) => {
+    AuthenticationService.login(req.headers, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};

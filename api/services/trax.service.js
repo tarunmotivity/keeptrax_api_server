@@ -9,6 +9,10 @@ function getAllTrax(headers, cb) {
             account: headers.userid,
             createdOn: { $gte: new Date(headers.startdate), $lte: new Date(headers.enddate) }
         }
+        console.log("USER ID:", headers.userid);
+console.log("START:", headers.startdate);
+console.log("END:", headers.enddate);
+console.log("QUERY:", dbQuery);
         dbObj.getAndPopulate(Visits, dbQuery, 'userPlace', function (err, response) {
             if (err) {
                 cb(err)

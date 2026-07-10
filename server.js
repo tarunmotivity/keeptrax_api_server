@@ -9,7 +9,19 @@ const { authorizeUser } = require('./helper/authorization');
 
 const app = express()
 
-app.use(bodyParser.json());
+app.use((req, res, next) => {
+    console.log("==================================");
+    console.log("Method:", req.method);
+    console.log("URL:", req.originalUrl);
+    console.log("Content-Type:", req.headers["content-type"]);
+    next();
+});
+
+app.use(bodyParser.json({
+  verify: (req, res, buf) => {
+    console.log("RAW BODY:", buf.toString());
+  }
+}));
 app.use(cors())
 app.use(authorizeUser);
 require('./api/routes/routes')(app)
@@ -29,6 +41,8 @@ app.set("view engine", "ejs");
 app.get('/', function (req, res) {
     res.send('welcome to KeepTrax')
 })
+
+
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.listen(config.port, () => {
