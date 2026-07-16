@@ -164,3 +164,34 @@ exports.createBookmark = (req, res) => {
         }
     });
 };
+exports.getPlaces = (req, res) => {
+    UserService.getPlaces(req, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};
+exports.searchPlaces = (req, res) => {
+    UserService.searchPlaces(req, (err, resp) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+    });
+};
+exports.getAnalytics = (req, res) => {
+
+    UserService.getAnalytics(req, (err, resp) => {
+
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+
+    });
+
+};

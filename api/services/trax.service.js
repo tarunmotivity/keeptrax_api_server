@@ -54,4 +54,89 @@ function placesCount(startDate, endDate, userId, cb) {
         cb({ status: 400, message: "Start date , end date and user Id are required" })
     }
 }
+async function getUserTrax(req, cb) {
+
+    try {
+
+        const query = {
+            account: req.params.id
+        };
+
+        if (req.query.start && req.query.end) {
+            query.entryTime = {
+                $gte: new Date(Number(req.query.start)),
+                $lte: new Date(Number(req.query.end))
+            };
+        }
+
+        const rows = Number(req.query.rows) || 25;
+
+        const visits = await Visits.find(query)
+            .populate("userPlace")
+            .sort({ entryTime: -1 })
+            .limit(rows);
+
+        cb(null, {
+            visits: visits,
+            visitsCount: visits.length
+        });
+
+    } catch (err) {
+
+        cb({
+            status: 400,
+            message: err.message
+        });
+
+    }
+
+}
+async function searchUserTrax(req, cb) {
+
+    try {
+
+        const q = req.query.q || "";
+
+        // Extract timestamps from:
+        // entryTime:[1645099200000 TO 1645185600000]
+        const match = q.match(/entryTime:\[(\d+)\s+TO\s+(\d+)\]/);
+
+        let query = {
+            account: req.params.id
+        };
+
+        if (match) {
+
+            query.entryTime = {
+                $gte: new Date(Number(match[1])),
+                $lte: new Date(Number(match[2]))
+            };
+
+        }
+
+        const rows = Number(req.query.rows) || 25;
+
+        const visits = await Visits.find(query)
+            .populate("userPlace")
+            .sort({ entryTime: -1 })
+            .limit(rows);
+
+        cb(null, {
+            visits: visits,
+            visitsCount: visits.length
+        });
+
+    } catch (err) {
+
+        cb({
+            status: 400,
+            message: err.message
+        });
+
+    }
+
+}
+
+module.exports.searchUserTrax = searchUserTrax;
+module.exports.getUserTrax = getUserTrax;
 module.exports.getAllTrax = getAllTrax;

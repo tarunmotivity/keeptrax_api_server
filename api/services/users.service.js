@@ -16,6 +16,7 @@ const SALT_WORK_FACTOR = 10;
 const bcrypt = require("bcrypt");
 const Share = require('../models/shareModel');
 const Trip = require('../models/tripModel');
+const mongoose = require("mongoose");
 
 async function getAllUsers(req, cb) {
   try {
@@ -323,219 +324,304 @@ async function getManagerUser(req, cb) {
 
 async function getBookmarks(userId, cb) {
 
-    try {
+  try {
 
-        const trips = await Trip.find({
-            account: userId
-        }).sort({ createdOn: -1 });
+    const trips = await Trip.find({
+      account: userId
+    }).sort({ createdOn: -1 });
 
-        const bookmarks = trips.map(item => ({
-            id: item._id,
-            name: item.name,
-            startTime: item.startTime,
-            endTime: item.endTime
-        }));
+    const bookmarks = trips.map(item => ({
+      id: item._id,
+      name: item.name,
+      startTime: item.startTime,
+      endTime: item.endTime
+    }));
 
-        cb(null, { bookmarks });
+    cb(null, { bookmarks });
 
-    } catch (err) {
-        cb(err);
-    }
+  } catch (err) {
+    cb(err);
+  }
 
 }
 
 async function createShare(req, payload, cb) {
 
-    try {
+  try {
 
-        const share = new Share({
+    const share = new Share({
 
-            sender: req.params.id,
+      sender: req.params.id,
 
-            organization: req.user.organization,
+      organization: req.user.organization,
 
-            bookmark: payload.bookmark || null,
+      bookmark: payload.bookmark || null,
 
-            recipients: payload.recipients || [],
+      recipients: payload.recipients || [],
 
-            name: payload.name,
+      name: payload.name,
 
-            type: payload.type,
+      type: payload.type,
 
-            isAlwaysOn: payload.isAlwaysOn,
+      isAlwaysOn: payload.isAlwaysOn,
 
-            isSharingImages: payload.isSharingImages,
+      isSharingImages: payload.isSharingImages,
 
-            expiresAt: new Date(Date.now() + Number(payload.expiresAt)),
+      expiresAt: new Date(Date.now() + Number(payload.expiresAt)),
 
-            expiresAtInMilliSeconds: Number(payload.expiresAt),
+      expiresAtInMilliSeconds: Number(payload.expiresAt),
 
-            createdOn: new Date(),
+      createdOn: new Date(),
 
-            lastupdatedOn: new Date(),
+      lastupdatedOn: new Date(),
 
-            views: []
+      views: []
 
-        });
+    });
 
-        const response = await share.save();
+    const response = await share.save();
 
-        cb(null, response);
+    cb(null, response);
 
-    } catch (err) {
+  } catch (err) {
 
-        cb({
-            status: 400,
-            message: err.message
-        });
+    cb({
+      status: 400,
+      message: err.message
+    });
 
-    }
+  }
 
 }
 
 async function getShares(userId, cb) {
 
-    try {
+  try {
 
-        const sent = await Share.find({
-            sender: userId
-        })
-        .populate("bookmark")
-        .lean();
+    const sent = await Share.find({
+      sender: userId
+    })
+      .populate("bookmark")
+      .lean();
 
-        const user = await User.findById(userId);
+    const user = await User.findById(userId);
 
-        const received = await Share.find({
-            "recipients.email": user.email
-        })
-        .populate("sender")
-        .populate("bookmark")
-        .lean();
+    const received = await Share.find({
+      "recipients.email": user.email
+    })
+      .populate("sender")
+      .populate("bookmark")
+      .lean();
 
-        cb(null, {
-            sent,
-            received
-        });
+    cb(null, {
+      sent,
+      received
+    });
 
-    } catch (err) {
+  } catch (err) {
 
-        cb(err);
+    cb(err);
 
-    }
+  }
 
 }
 
 async function getProfile(userId, cb) {
 
-    try {
+  try {
 
-        const user = await User.findById(userId).lean();
+    const user = await User.findById(userId).lean();
 
-        if (!user) {
-            return cb({
-                status: 404,
-                message: "User not found"
-            });
-        }
-
-        cb(null, user);
-
-    } catch (err) {
-
-        cb({
-            status: 400,
-            message: err.message
-        });
-
+    if (!user) {
+      return cb({
+        status: 404,
+        message: "User not found"
+      });
     }
+
+    cb(null, user);
+
+  } catch (err) {
+
+    cb({
+      status: 400,
+      message: err.message
+    });
+
+  }
 
 }
 
 async function updateProfile(userId, body, cb) {
 
-    try {
+  try {
 
-        await User.findByIdAndUpdate(
-            userId,
-            {
-                firstname: body.firstname,
-                lastname: body.lastname,
-                mobile: body.mobile,
-                birthDate: body.birthDate,
-                gender: body.gender,
-                lastUpdatedOn: new Date()
-            }
-        );
+    await User.findByIdAndUpdate(
+      userId,
+      {
+        firstname: body.firstname,
+        lastname: body.lastname,
+        mobile: body.mobile,
+        birthDate: body.birthDate,
+        gender: body.gender,
+        lastUpdatedOn: new Date()
+      }
+    );
 
-        cb(null, {
-            message: "Profile updated successfully"
-        });
+    cb(null, {
+      message: "Profile updated successfully"
+    });
 
-    } catch (err) {
+  } catch (err) {
 
-        cb({
-            status: 400,
-            message: err.message
-        });
+    cb({
+      status: 400,
+      message: err.message
+    });
 
-    }
+  }
 
 }
 
 async function logout(userId, cb) {
-    try {
-        cb(null, {
-            status: 200,
-            logoutstatus: true,
-            message: "Logged out successfully"
-        });
-    } catch (err) {
-        cb({
-            status: 400,
-            message: err.message
-        });
-    }
+  try {
+    cb(null, {
+      status: 200,
+      logoutstatus: true,
+      message: "Logged out successfully"
+    });
+  } catch (err) {
+    cb({
+      status: 400,
+      message: err.message
+    });
+  }
 }
 async function getCategories(cb) {
 
-    const categories = [
+  const categories = [
 
-        { _id: 1, internalCat: "Restaurant" },
-        { _id: 2, internalCat: "Hotel" },
-        { _id: 3, internalCat: "Cafe" },
-        { _id: 4, internalCat: "Office" },
-        { _id: 5, internalCat: "Home" },
-        { _id: 6, internalCat: "Shopping" },
-        { _id: 7, internalCat: "Hospital" },
-        { _id: 8, internalCat: "School" },
-        { _id: 9, internalCat: "Airport" },
-        { _id: 10, internalCat: "Gym" },
-        { _id: 11, internalCat: "Other" }
+    { _id: 1, internalCat: "Restaurant" },
+    { _id: 2, internalCat: "Hotel" },
+    { _id: 3, internalCat: "Cafe" },
+    { _id: 4, internalCat: "Office" },
+    { _id: 5, internalCat: "Home" },
+    { _id: 6, internalCat: "Shopping" },
+    { _id: 7, internalCat: "Hospital" },
+    { _id: 8, internalCat: "School" },
+    { _id: 9, internalCat: "Airport" },
+    { _id: 10, internalCat: "Gym" },
+    { _id: 11, internalCat: "Other" }
 
-    ];
+  ];
 
-    cb(null, categories);
+  cb(null, categories);
 
 }
 async function createBookmark(userId, payload, cb) {
 
+  try {
+
+    const trip = new Trip({
+      account: userId,
+      name: payload.name,
+      startTime: new Date(Number(payload.startTime)),
+      endTime: new Date(Number(payload.endTime)),
+      createdOn: new Date(),
+      lastUpdatedOn: new Date()
+    });
+
+    const response = await trip.save();
+
+    cb(null, {
+      status: 200,
+      response,
+      message: "Bookmark created successfully"
+    });
+
+  } catch (err) {
+
+    cb({
+      status: 400,
+      message: err.message
+    });
+
+  }
+
+}
+async function getPlaces(req, cb) {
+
+  
+  try {
+
+    const query = {
+      account: req.params.id,
+      activeStatus: true
+    };
+
+    if (req.query.placeIds) {
+
+      const ids = req.query.placeIds
+        .split(",")
+        .map(id => new mongoose.Types.ObjectId(id));
+
+      query._id = {
+        $in: ids
+      };
+
+    }
+    
+
+    const places = await UserPlaces.find(query)
+      .sort({ createdOn: -1 });
+
+    cb(null, {
+      places: places
+    });
+
+  } catch (err) {
+
+    cb({
+      status: 400,
+      message: err.message
+    });
+
+  }
+
+}
+async function searchPlaces(req, cb) {
+
     try {
 
-        const trip = new Trip({
-            account: userId,
-            name: payload.name,
-            startTime: new Date(Number(payload.startTime)),
-            endTime: new Date(Number(payload.endTime)),
-            createdOn: new Date(),
-            lastUpdatedOn: new Date()
-        });
+        const searchText = req.query.q || "";
 
-        const response = await trip.save();
+        const places = await UserPlaces.find({
+            account: req.params.id,
+            activeStatus: true,
+            $or: [
+                {
+                    name: {
+                        $regex: searchText,
+                        $options: "i"
+                    }
+                },
+                {
+                    locality: {
+                        $regex: searchText,
+                        $options: "i"
+                    }
+                },
+                {
+                    sublocality: {
+                        $regex: searchText,
+                        $options: "i"
+                    }
+                }
+            ]
+        }).sort({ createdOn: -1 });
 
         cb(null, {
-            status: 200,
-            response,
-            message: "Bookmark created successfully"
+            places: places
         });
 
     } catch (err) {
@@ -548,6 +634,84 @@ async function createBookmark(userId, payload, cb) {
     }
 
 }
+async function getAnalytics(req, cb) {
+
+    try {
+
+        const userId = req.params.id;
+
+        const totalVisits = await Visits.countDocuments({
+            account: userId,
+            activeStatus: true
+        });
+
+        const totalPlaces = await UserPlaces.countDocuments({
+            account: userId,
+            activeStatus: true
+        });
+
+        const topPlaces = await Visits.aggregate([
+            {
+                $match: {
+                    account: new mongoose.Types.ObjectId(userId),
+                    activeStatus: true
+                }
+            },
+            {
+                $group: {
+                    _id: "$userPlace",
+                    visits: { $sum: 1 }
+                }
+            },
+            {
+                $sort: {
+                    visits: -1
+                }
+            },
+            {
+                $limit: 5
+            },
+            {
+                $lookup: {
+                    from: "userplaces",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "place"
+                }
+            },
+            {
+                $unwind: "$place"
+            },
+            {
+                $project: {
+                    _id: 0,
+                    placeId: "$place._id",
+                    placeName: "$place.name",
+                    visits: 1
+                }
+            }
+        ]);
+
+        cb(null, {
+            totalVisits,
+            totalPlaces,
+            topPlaces
+        });
+
+    } catch (err) {
+
+        cb({
+            status: 400,
+            message: err.message
+        });
+
+    }
+
+}
+
+module.exports.getAnalytics = getAnalytics;
+module.exports.searchPlaces = searchPlaces;
+module.exports.getPlaces = getPlaces;
 module.exports.createBookmark = createBookmark;
 module.exports.getCategories = getCategories;
 module.exports.logout = logout;
