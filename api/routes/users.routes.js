@@ -29,6 +29,12 @@ router.route('/api/v2.0.1/users/:id/places/search')
     .get(userController.searchPlaces);
 router.route('/api/v2.0.1/users/:id/analytics')
     .get(userController.getAnalytics);
+router.route('/api/v2.0.1/users/:id/places/nearby')
+    .get(userController.getNearbyPlaces);
+router.route('/api/v2.0.1/users/:id/places/details')
+    .get(userController.getPlaceDetails);
+router.route('/api/v2.0.1/users/:id/places/findnearBy')
+    .get(userController.findNearByPlaces);
 
 
 

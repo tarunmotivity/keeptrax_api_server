@@ -195,3 +195,41 @@ exports.getAnalytics = (req, res) => {
     });
 
 };
+exports.getNearbyPlaces = (req, res) => {
+
+    UserService.getNearbyPlaces(req, (err, resp) => {
+
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+
+    });
+
+};
+exports.getPlaceDetails = (req, res) => {
+
+    UserService.getPlaceDetails(req, (err, resp) => {
+
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+
+    });
+};
+exports.findNearByPlaces = (req, res) => {
+
+    UserService.findNearByPlaces(req, (err, resp) => {
+
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(resp);
+        }
+
+    });
+
+};

@@ -172,5 +172,8 @@ schema.index({
     unique: true,
     name: 'unique_address'
 });
+schema.index({
+    loc: "2dsphere"
+});
 
 module.exports = mongoose.model('UserPlaces', schema);

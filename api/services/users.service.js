@@ -17,6 +17,7 @@ const bcrypt = require("bcrypt");
 const Share = require('../models/shareModel');
 const Trip = require('../models/tripModel');
 const mongoose = require("mongoose");
+const axios = require("axios");
 
 async function getAllUsers(req, cb) {
   try {
@@ -551,7 +552,7 @@ async function createBookmark(userId, payload, cb) {
 }
 async function getPlaces(req, cb) {
 
-  
+
   try {
 
     const query = {
@@ -570,7 +571,7 @@ async function getPlaces(req, cb) {
       };
 
     }
-    
+
 
     const places = await UserPlaces.find(query)
       .sort({ createdOn: -1 });
@@ -591,124 +592,318 @@ async function getPlaces(req, cb) {
 }
 async function searchPlaces(req, cb) {
 
-    try {
+  try {
 
-        const searchText = req.query.q || "";
+    const searchText = req.query.q || "";
 
-        const places = await UserPlaces.find({
-            account: req.params.id,
-            activeStatus: true,
-            $or: [
-                {
-                    name: {
-                        $regex: searchText,
-                        $options: "i"
-                    }
-                },
-                {
-                    locality: {
-                        $regex: searchText,
-                        $options: "i"
-                    }
-                },
-                {
-                    sublocality: {
-                        $regex: searchText,
-                        $options: "i"
-                    }
-                }
-            ]
-        }).sort({ createdOn: -1 });
+    const places = await UserPlaces.find({
+      account: req.params.id,
+      activeStatus: true,
+      $or: [
+        {
+          name: {
+            $regex: searchText,
+            $options: "i"
+          }
+        },
+        {
+          locality: {
+            $regex: searchText,
+            $options: "i"
+          }
+        },
+        {
+          sublocality: {
+            $regex: searchText,
+            $options: "i"
+          }
+        }
+      ]
+    }).sort({ createdOn: -1 });
 
-        cb(null, {
-            places: places
-        });
+    cb(null, {
+      places: places
+    });
 
-    } catch (err) {
+  } catch (err) {
 
-        cb({
-            status: 400,
-            message: err.message
-        });
+    cb({
+      status: 400,
+      message: err.message
+    });
 
-    }
+  }
 
 }
 async function getAnalytics(req, cb) {
 
-    try {
+  try {
 
-        const userId = req.params.id;
+    const userId = req.params.id;
 
-        const totalVisits = await Visits.countDocuments({
-            account: userId,
-            activeStatus: true
-        });
+    const totalVisits = await Visits.countDocuments({
+      account: userId,
+      activeStatus: true
+    });
 
-        const totalPlaces = await UserPlaces.countDocuments({
-            account: userId,
-            activeStatus: true
-        });
+    const totalPlaces = await UserPlaces.countDocuments({
+      account: userId,
+      activeStatus: true
+    });
 
-        const topPlaces = await Visits.aggregate([
-            {
-                $match: {
-                    account: new mongoose.Types.ObjectId(userId),
-                    activeStatus: true
-                }
-            },
-            {
-                $group: {
-                    _id: "$userPlace",
-                    visits: { $sum: 1 }
-                }
-            },
-            {
-                $sort: {
-                    visits: -1
-                }
-            },
-            {
-                $limit: 5
-            },
-            {
-                $lookup: {
-                    from: "userplaces",
-                    localField: "_id",
-                    foreignField: "_id",
-                    as: "place"
-                }
-            },
-            {
-                $unwind: "$place"
-            },
-            {
-                $project: {
-                    _id: 0,
-                    placeId: "$place._id",
-                    placeName: "$place.name",
-                    visits: 1
-                }
-            }
-        ]);
+    const topPlaces = await Visits.aggregate([
+      {
+        $match: {
+          account: new mongoose.Types.ObjectId(userId),
+          activeStatus: true
+        }
+      },
+      {
+        $group: {
+          _id: "$userPlace",
+          visits: { $sum: 1 }
+        }
+      },
+      {
+        $sort: {
+          visits: -1
+        }
+      },
+      {
+        $limit: 5
+      },
+      {
+        $lookup: {
+          from: "userplaces",
+          localField: "_id",
+          foreignField: "_id",
+          as: "place"
+        }
+      },
+      {
+        $unwind: "$place"
+      },
+      {
+        $project: {
+          _id: 0,
+          placeId: "$place._id",
+          placeName: "$place.name",
+          visits: 1
+        }
+      }
+    ]);
 
-        cb(null, {
-            totalVisits,
-            totalPlaces,
-            topPlaces
-        });
+    cb(null, {
+      totalVisits,
+      totalPlaces,
+      topPlaces
+    });
 
-    } catch (err) {
+  } catch (err) {
 
-        cb({
-            status: 400,
-            message: err.message
-        });
+    cb({
+      status: 400,
+      message: err.message
+    });
+
+  }
+
+}
+async function getNearbyPlaces(req, cb) {
+
+  try {
+
+    const { location, radius } = req.query;
+
+    if (!location) {
+      return cb({
+        status: 400,
+        message: "location is required"
+      });
+    }
+
+    const googleUrl =
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json` +
+      `?location=${location}` +
+      `&radius=${radius || 200}` +
+      `&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+
+    const response = await axios.get(googleUrl);
+
+    const places = response.data.results
+      .filter(place =>
+        !place.types.includes("political") &&
+        !place.types.includes("locality")
+      )
+      .map(place => ({
+        placeId: place.place_id,
+        name: place.name,
+        rating: place.rating || 0,
+        categories: place.types || [],
+        vicinity: place.vicinity || "",
+        loc: {
+          type: "Point",
+          coordinates: [
+            place.geometry.location.lng,
+            place.geometry.location.lat
+          ]
+        }
+      }));
+    cb(null, {
+      places
+    });
+
+  } catch (err) {
+
+    cb({
+      status: 500,
+      message: err.message
+    });
+
+  }
+
+}
+async function getPlaceDetails(req, cb) {
+
+  try {
+
+    const { placeId } = req.query;
+
+    if (!placeId) {
+      return cb({
+        status: 400,
+        message: "placeId is required"
+      });
+    }
+
+    const googleUrl =
+      `https://maps.googleapis.com/maps/api/place/details/json` +
+      `?place_id=${placeId}` +
+      `&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+
+    const response = await axios.get(googleUrl);
+
+    const place = response.data.result;
+
+    cb(null, {
+      placeId: place.place_id,
+      name: place.name,
+      address: place.formatted_address,
+      phoneNumber: place.formatted_phone_number || "",
+      website: place.website || "",
+      rating: place.rating || 0,
+      userRatingsTotal: place.user_ratings_total || 0,
+      categories: place.types || [],
+      location: {
+        lat: place.geometry.location.lat,
+        lng: place.geometry.location.lng
+      },
+      openingHours: place.opening_hours
+        ? place.opening_hours.weekday_text
+        : [],
+      photos: place.photos
+        ? place.photos.map(photo => ({
+          photoReference: photo.photo_reference,
+          width: photo.width,
+          height: photo.height
+        }))
+        : []
+    });
+
+  } catch (err) {
+
+    cb({
+      status: 500,
+      message: err.message
+    });
+
+  }
+
+}
+async function findNearByPlaces(req, cb) {
+
+  try {
+
+    const userId = req.params.id;
+
+    const { location, historyradius = 1000, radius = 200 } = req.query;
+
+    if (!location) {
+      return cb({
+        status: 400,
+        message: "location is required"
+      });
+    }
+
+    const [lat, lng] = location.split(',').map(Number);
+
+    const nearbyPlaces = await UserPlaces.find({
+      account: userId,
+      activeStatus: true,
+      loc: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [lng, lat]
+          },
+          $maxDistance: Number(historyradius)
+        }
+      }
+    }).limit(20);
+    if (nearbyPlaces.length > 0) {
+
+      return cb(null, {
+        places: nearbyPlaces
+      });
 
     }
 
+    const googleUrl =
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json` +
+      `?location=${location}` +
+      `&radius=${radius}` +
+      `&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+
+    const response = await axios.get(googleUrl);
+
+    const places = response.data.results
+      .filter(place =>
+        !place.types.includes("political") &&
+        !place.types.includes("locality")
+      )
+      .map(place => ({
+        placeId: place.place_id,
+        name: place.name,
+        rating: place.rating || 0,
+        categories: place.types || [],
+        vicinity: place.vicinity || "",
+        loc: {
+          type: "Point",
+          coordinates: [
+            place.geometry.location.lng,
+            place.geometry.location.lat
+          ]
+        }
+      }));
+
+    cb(null, {
+      places
+    });
+
+  } catch (err) {
+
+    cb({
+      status: 500,
+      message: err.message
+    });
+
+  }
+
 }
 
+module.exports.findNearByPlaces = findNearByPlaces;
+module.exports.getPlaceDetails = getPlaceDetails;
+module.exports.getNearbyPlaces = getNearbyPlaces;
 module.exports.getAnalytics = getAnalytics;
 module.exports.searchPlaces = searchPlaces;
 module.exports.getPlaces = getPlaces;
