@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require("path");
 
 const config = require('./config/config');
 const logger = config.getLogger('server.js');
@@ -17,7 +18,10 @@ app.use((req, res, next) => {
     console.log("Content-Type:", req.headers["content-type"]);
     next();
 });
-
+app.use(
+    "/uploads",
+    express.static(path.join(__dirname, "uploads"))
+);
 app.use(bodyParser.json({
   verify: (req, res, buf) => {
     console.log("RAW BODY:", buf.toString());

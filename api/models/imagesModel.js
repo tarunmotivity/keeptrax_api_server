@@ -3,20 +3,20 @@ var Schema = mongoose.Schema;
 
 var schema = new Schema({
 
-    account: {
+    user: {
         type: Schema.Types.ObjectId,
         ref: "Users",
         required: true,
         index: true
     },
 
-    placeId: {
+    userPlaces: {
         type: Schema.Types.ObjectId,
         ref: "UserPlaces",
         required: true
     },
 
-    traxId: {
+    visits: {
         type: Schema.Types.ObjectId,
         ref: "Visits",
         required: true
@@ -30,20 +30,6 @@ var schema = new Schema({
     thumbnail: {
         type: String,
         required: true
-    },
-
-    timestamp: {
-        type: Number,
-        default: Date.now
-    },
-
-    lat: Number,
-
-    lng: Number,
-
-    createdOn: {
-        type: Date,
-        default: Date.now
     },
 
     lastUpdatedOn: {

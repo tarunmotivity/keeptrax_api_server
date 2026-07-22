@@ -4,44 +4,106 @@ const UserPlaces = require("../models/userPlacesModel");
 exports.getImages = async (userId, query) => {
 
     let filter = {
-        account: userId
+        user: userId
     };
 
     if (query.visitid) {
-        filter.traxId = query.visitid;
+        filter.visits = query.visitid;
     }
 
     if (query.placeid) {
-        filter.placeId = query.placeid;
+        filter.userPlaces = query.placeid;
     }
 
-    if (query.startTime && query.endTime) {
+    const images = await Images.find(filter)
+        .populate("userPlaces", "name")
+        .lean();
 
-        filter.timestamp = {
-            $gte: new Date(query.startTime).getTime(),
-            $lte: new Date(query.endTime).getTime()
-        };
+    return images.map(image => ({
+        imageId: image._id,
+        image: image.image,
+        thumbnail: image.thumbnail,
+        placeId: image.userPlaces?._id,
+        name: image.userPlaces?.name || "",
+        traxId: image.visits
+    }));
+};
 
+exports.uploadImage = async (userId, body, file, req) => {
+
+    const place = await UserPlaces.findById(body.placeId);
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const imageUrl = `${baseUrl}/uploads/images/${file.filename}`;
+
+    const image = await Images.create({
+
+        user: userId,
+
+        userPlaces: body.placeId,
+
+        visits: body.traxId,
+
+        image: imageUrl,
+
+        thumbnail: imageUrl,
+
+        lastUpdatedOn: new Date()
+
+    });
+
+    return {
+
+        imageId: image._id,
+
+        image: image.image,
+
+        thumbnail: image.thumbnail,
+
+        placeId: image.userPlaces,
+
+        name: place ? place.name : "",
+
+        traxId: image.visits
+
+    };
+};
+const fs = require("fs");
+const path = require("path");
+
+exports.deleteImage = async (userId, imageId) => {
+
+    const image = await Images.findOne({
+        _id: imageId,
+        user: userId
+    });
+
+    if (!image) {
+        throw new Error("Image not found.");
     }
 
-    const images = await Images.find(filter).lean();
+    // Delete physical file
+    if (image.image) {
 
-    const result = [];
+        const fileName = path.basename(image.image);
 
-    for (const image of images) {
+        const filePath = path.join(
+            __dirname,
+            "../../uploads/images",
+            fileName
+        );
 
-        const place = await UserPlaces.findById(image.placeId);
-
-        result.push({
-            imageId: image._id,
-            image: image.image,
-            thumbnail: image.thumbnail,
-            placeId: image.placeId,
-            name: place ? place.name : "",
-            traxId: image.traxId
-        });
-
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
     }
 
-    return result;
+    await Images.deleteOne({
+        _id: imageId
+    });
+
+    return {
+        success: true,
+        message: "Image deleted successfully."
+    };
 };
