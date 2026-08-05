@@ -23,6 +23,9 @@ router.route("/api/v2.0.1/data")
 router.route('/api/v2.0.1/users/:id/bookmarks')
     .get(userController.getBookmarks)
     .post(userController.createBookmark);
+router.route('/api/v2.0.1/users/:id/bookmarks/:bookmarkId')
+    .put(userController.updateBookmark)
+    .delete(userController.deleteBookmark);
 router.route('/api/v2.0.1/users/:id/places')
     .get(userController.getPlaces);
 router.route('/api/v2.0.1/users/:id/places/search')

@@ -853,6 +853,7 @@ async function findNearByPlaces(req, cb) {
     if (nearbyPlaces.length > 0) {
 
       return cb(null, {
+        history: nearbyPlaces,
         places: nearbyPlaces
       });
 
@@ -887,7 +888,8 @@ async function findNearByPlaces(req, cb) {
       }));
 
     cb(null, {
-      places
+      history: places,
+      places: places
     });
 
   } catch (err) {
@@ -900,7 +902,93 @@ async function findNearByPlaces(req, cb) {
   }
 
 }
+async function updateBookmark(userId, bookmarkId, body, cb) {
 
+  try {
+
+    const bookmark = await Trip.findOneAndUpdate(
+
+      {
+        _id: bookmarkId,
+        account: userId
+      },
+
+      {
+        name: body.name,
+        startTime: new Date(Number(body.startTime)),
+        endTime: new Date(Number(body.endTime)),
+        lastUpdatedOn: new Date()
+      },
+
+      {
+        new: true
+      }
+
+    );
+
+    if (!bookmark) {
+
+      return cb({
+        status: 404,
+        message: "Bookmark not found"
+      });
+
+    }
+
+    cb(null, {
+      status: 200,
+      response: bookmark,
+      message: "Bookmark updated successfully"
+    });
+
+  } catch (err) {
+
+    cb({
+      status: 400,
+      message: err.message
+    });
+
+  }
+
+}
+
+async function deleteBookmark(userId, bookmarkId, cb) {
+
+  try {
+
+    const bookmark = await Trip.findOneAndDelete({
+
+      _id: bookmarkId,
+      account: userId
+
+    });
+
+    if (!bookmark) {
+
+      return cb({
+        status: 404,
+        message: "Bookmark not found"
+      });
+
+    }
+
+    cb(null, {
+      status: 200,
+      message: "Bookmark deleted successfully"
+    });
+
+  } catch (err) {
+
+    cb({
+      status: 400,
+      message: err.message
+    });
+
+  }
+
+}
+module.exports.updateBookmark = updateBookmark;
+module.exports.deleteBookmark = deleteBookmark;
 module.exports.findNearByPlaces = findNearByPlaces;
 module.exports.getPlaceDetails = getPlaceDetails;
 module.exports.getNearbyPlaces = getNearbyPlaces;
