@@ -118,6 +118,33 @@ exports.getShares = (req, res) => {
         }
     });
 };
+
+exports.deleteShare = (req, res) => {
+
+    UserService.deleteShare(
+
+        req.params.id,
+
+        req.params.shareId,
+
+        (err, resp) => {
+
+            if (err) {
+
+                res.send(err);
+
+            } else {
+
+                res.send(resp);
+
+            }
+
+        }
+
+    );
+
+};
+
 exports.getProfile = (req, res) => {
     UserService.getProfile(req.params.id, (err, resp) => {
         if (err) {
@@ -265,5 +292,130 @@ exports.findNearByPlaces = (req, res) => {
         }
 
     });
+
+};
+exports.createPlace = (req, res) => {
+
+    UserService.createPlace(
+        req.params.id,
+        req.body,
+        (err, resp) => {
+
+            if (err) {
+                res.send(err);
+            } else {
+                res.send(resp);
+            }
+
+        }
+    );
+
+};
+exports.updatePlace = (req, res) => {
+
+    UserService.updatePlace(
+
+        req.params.id,
+
+        req.params.placeId,
+
+        req.body,
+
+        (err, resp) => {
+
+            if (err) {
+
+                res.send(err);
+
+            } else {
+
+                res.send(resp);
+
+            }
+
+        }
+
+    );
+
+};
+exports.getSharedTrax = (req, res) => {
+
+    UserService.getSharedTrax(
+
+        req.params.id,
+
+        req.params.shareId,
+
+        req.query,
+
+        (err, resp) => {
+
+            if (err) {
+
+                res.send(err);
+
+            } else {
+
+                res.send(resp);
+
+            }
+
+        }
+
+    );
+
+};
+exports.getSharedPlaces = (req, res) => {
+
+    UserService.getSharedPlaces(
+
+        req.params.id,
+
+        req.params.shareId,
+
+        req.query,
+
+        (err, resp) => {
+
+            if (err) {
+
+                res.send(err);
+
+            } else {
+
+                res.send(resp);
+
+            }
+
+        }
+
+    );
+
+};
+exports.getSharedImages = (req, res) => {
+
+    UserService.getSharedImages(
+
+        req.params.id,
+
+        req.params.shareId,
+
+        req.query,
+
+        (err, resp) => {
+
+            if (err) {
+
+                res.send(err);
+
+            } else {
+
+                res.send(resp);
+
+            }
+
+        }
+
+    );
 
 };

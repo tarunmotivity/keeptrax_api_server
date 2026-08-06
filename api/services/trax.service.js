@@ -136,7 +136,131 @@ async function searchUserTrax(req, cb) {
     }
 
 }
+async function deleteTrax(userId, traxId, cb) {
 
+    try {
+
+        const visit = await Visits.findOneAndDelete({
+
+            _id: traxId,
+
+            account: userId
+
+        });
+
+        if (!visit) {
+
+            return cb({
+
+                status: 404,
+
+                message: "Visit not found"
+
+            });
+
+        }
+
+        cb(null, {
+
+            message: "Successfully deleted visit",
+
+            response: {
+
+                id: traxId
+
+            }
+
+        });
+
+    } catch (err) {
+
+        cb({
+
+            status: 400,
+
+            message: err.message
+
+        });
+
+    }
+
+}
+async function updateTrax(userId, placeId, traxId, body, cb) {
+
+    try {
+
+        const updateObj = {
+
+            lastUpdatedOn: new Date()
+
+        };
+
+        if (body.notes !== undefined)
+            updateObj.notes = body.notes;
+
+        const visit = await Visits.findOneAndUpdate(
+
+            {
+
+                _id: traxId,
+
+                account: userId,
+
+                userPlace: placeId
+
+            },
+
+            updateObj,
+
+            {
+
+                new: true
+
+            }
+
+        );
+
+        if (!visit) {
+
+            return cb({
+
+                status: 404,
+
+                message: "Visit not found"
+
+            });
+
+        }
+
+        cb(null, {
+
+            message: "Successfully updated",
+
+            response: {
+
+                id: visit._id
+
+            }
+
+        });
+
+    }
+
+    catch (err) {
+
+        cb({
+
+            status: 400,
+
+            message: err.message
+
+        });
+
+    }
+
+}
+module.exports.updateTrax = updateTrax;
+module.exports.deleteTrax = deleteTrax;
 module.exports.searchUserTrax = searchUserTrax;
 module.exports.getUserTrax = getUserTrax;
 module.exports.getAllTrax = getAllTrax;

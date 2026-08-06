@@ -31,3 +31,57 @@ module.exports.searchUserTrax = (req, res) => {
     });
 
 };
+module.exports.deleteTrax = (req, res) => {
+
+    TraxService.deleteTrax(
+
+        req.params.id,
+
+        req.params.traxId,
+
+        (err, resp) => {
+
+            if (err) {
+
+                res.send(err);
+
+            } else {
+
+                res.send(resp);
+
+            }
+
+        }
+
+    );
+
+};
+module.exports.updateTrax = (req, res) => {
+
+    TraxService.updateTrax(
+
+        req.params.id,
+
+        req.params.placeId,
+
+        req.params.traxId,
+
+        req.body,
+
+        (err, resp) => {
+
+            if (err) {
+
+                res.send(err);
+
+            } else {
+
+                res.send(resp);
+
+            }
+
+        }
+
+    );
+
+};

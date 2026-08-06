@@ -18,6 +18,7 @@ const Share = require('../models/shareModel');
 const Trip = require('../models/tripModel');
 const mongoose = require("mongoose");
 const axios = require("axios");
+var Images = require("../models/imagesModel");
 
 async function getAllUsers(req, cb) {
   try {
@@ -987,6 +988,485 @@ async function deleteBookmark(userId, bookmarkId, cb) {
   }
 
 }
+async function createPlace(userId, body, cb) {
+
+  try {
+
+    const place = new UserPlaces({
+
+      account: userId,
+
+      name: body.name,
+
+      locality: body.locality,
+
+      sublocality: body.sublocality,
+
+      country: body.country,
+
+      administrative_area_level_1: body.administrative_area_level_1,
+
+      internalCat: body.internalCat || [],
+
+      rating: body.rating || 0,
+
+      activeStatus: true,
+
+      categories: [],
+
+      count: 0,
+
+      loc: {
+        type: "Point",
+        coordinates: [
+          Number(body.lng),
+          Number(body.lat)
+        ]
+      },
+
+      createdOn: new Date(),
+
+      lastUpdatedOn: new Date()
+
+    });
+
+    await place.save();
+
+    cb(null, {
+
+      message: "Successfully updated",
+
+      response: {
+
+        id: place._id
+
+      }
+
+    });
+
+  } catch (err) {
+
+    cb({
+
+      status: 400,
+
+      message: err.message
+
+    });
+
+  }
+
+}
+async function updatePlace(userId, placeId, body, cb) {
+
+  try {
+
+    const updateObj = {
+
+      lastUpdatedOn: new Date()
+
+    };
+
+    if (body.name !== undefined)
+      updateObj.name = body.name;
+
+    if (body.locality !== undefined)
+      updateObj.locality = body.locality;
+
+    if (body.sublocality !== undefined)
+      updateObj.sublocality = body.sublocality;
+
+    if (body.country !== undefined)
+      updateObj.country = body.country;
+
+    if (body.administrative_area_level_1 !== undefined)
+      updateObj.administrative_area_level_1 = body.administrative_area_level_1;
+
+    if (body.internalCat !== undefined)
+      updateObj.internalCat = body.internalCat;
+
+    if (body.rating !== undefined)
+      updateObj.rating = body.rating;
+
+    if (body.lat !== undefined && body.lng !== undefined) {
+
+      updateObj.loc = {
+
+        type: "Point",
+
+        coordinates: [
+
+          Number(body.lng),
+
+          Number(body.lat)
+
+        ]
+
+      };
+
+    }
+
+    const place = await UserPlaces.findOneAndUpdate(
+
+      {
+
+        _id: placeId,
+
+        account: userId
+
+      },
+
+      updateObj,
+
+      {
+
+        new: true
+
+      }
+
+    );
+
+    if (!place) {
+
+      return cb({
+
+        status: 404,
+
+        message: "Place not found"
+
+      });
+
+    }
+
+    cb(null, {
+
+      message: "Successfully updated",
+
+      response: {
+
+        id: place._id
+
+      }
+
+    });
+
+  }
+
+  catch (err) {
+
+    cb({
+
+      status: 400,
+
+      message: err.message
+
+    });
+
+  }
+
+}
+async function deleteShare(userId, shareId, cb) {
+
+  try {
+
+    const share = await Share.findOneAndDelete({
+
+      _id: shareId,
+
+      sender: userId
+
+    });
+
+    if (!share) {
+
+      return cb({
+
+        status: 404,
+
+        message: "Share not found"
+
+      });
+
+    }
+
+    cb(null, {
+
+      message: "Successfully deleted share",
+
+      response: {
+
+        id: share._id
+
+      }
+
+    });
+
+  } catch (err) {
+
+    cb({
+
+      status: 400,
+
+      message: err.message
+
+    });
+
+  }
+
+}
+async function getSharedTrax(userId, shareId, query, cb) {
+
+  try {
+
+    const share = await Share.findById(shareId);
+
+    if (!share) {
+
+      return cb({
+
+        status: 404,
+
+        message: "Share not found"
+
+      });
+
+    }
+
+    const trip = await Trip.findById(share.bookmark);
+
+    if (!trip) {
+
+      return cb({
+
+        status: 404,
+
+        message: "Bookmark not found"
+
+      });
+
+    }
+
+    const rows = Number(query.rows) || 10000;
+
+    const visits = await Visits.find({
+
+      account: userId,
+
+      entryTime: {
+
+        $gte: trip.startTime,
+
+        $lte: trip.endTime
+
+      }
+
+    })
+
+      .populate("userPlace")
+
+      .sort({
+
+        entryTime: 1
+
+      })
+
+      .limit(rows);
+
+    cb(null, {
+
+      visits,
+
+      visitsCount: visits.length
+
+    });
+
+  }
+
+  catch (err) {
+
+    cb({
+
+      status: 400,
+
+      message: err.message
+
+    });
+
+  }
+
+}
+async function getSharedPlaces(userId, shareId, query, cb) {
+
+  try {
+
+    const share = await Share.findById(shareId);
+
+    if (!share) {
+
+      return cb({
+        status: 404,
+        message: "Share not found"
+      });
+
+    }
+
+    const trip = await Trip.findById(share.bookmark);
+
+    if (!trip) {
+
+      return cb({
+        status: 404,
+        message: "Bookmark not found"
+      });
+
+    }
+
+    const visits = await Visits.find({
+
+      account: userId,
+
+      entryTime: {
+
+        $gte: trip.startTime,
+
+        $lte: trip.endTime
+
+      }
+
+    }).select("userPlace");
+
+    const placeIds = [...new Set(
+      visits.map(v => v.userPlace.toString())
+    )];
+
+    const places = await UserPlaces.find({
+
+      _id: {
+        $in: placeIds
+      }
+
+    });
+
+    cb(null, {
+
+      places
+
+    });
+
+  }
+
+  catch (err) {
+
+    cb({
+
+      status: 400,
+
+      message: err.message
+
+    });
+
+  }
+
+}
+async function getSharedImages(userId, shareId, query, cb) {
+
+  try {
+
+    const share = await Share.findById(shareId);
+
+    if (!share) {
+
+      return cb({
+
+        status: 404,
+
+        message: "Share not found"
+
+      });
+
+    }
+
+    const trip = await Trip.findById(share.bookmark);
+
+    if (!trip) {
+
+      return cb({
+
+        status: 404,
+
+        message: "Bookmark not found"
+
+      });
+
+    }
+
+    const visits = await Visits.find({
+
+      account: userId,
+
+      entryTime: {
+
+        $gte: trip.startTime,
+
+        $lte: trip.endTime
+
+      }
+
+    }).select("_id");
+
+    const visitIds = visits.map(v => v._id);
+
+    const images = await Images.find({
+
+      visits: {
+
+        $in: visitIds
+
+      }
+
+    });
+
+    const response = images.map(img => ({
+
+      imageId: img._id,
+
+      image: img.image,
+
+      thumbnail: img.thumbnail,
+
+      placeId: img.userPlaces,
+
+      traxId: img.visits
+
+    }));
+
+    cb(null, {
+
+      images: response
+
+    });
+
+  }
+
+  catch (err) {
+
+    cb({
+
+      status: 400,
+
+      message: err.message
+
+    });
+
+  }
+
+}
+module.exports.getSharedImages = getSharedImages;
+module.exports.getSharedPlaces = getSharedPlaces;
+module.exports.deleteShare = deleteShare;
+module.exports.getSharedTrax = getSharedTrax;
+module.exports.updatePlace = updatePlace;
+module.exports.createPlace = createPlace;
 module.exports.updateBookmark = updateBookmark;
 module.exports.deleteBookmark = deleteBookmark;
 module.exports.findNearByPlaces = findNearByPlaces;

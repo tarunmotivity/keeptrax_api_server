@@ -13,6 +13,10 @@ router.route('/getManagerUser').get(userController.getManagerUser);
 router.route('/api/v2.0.1/users/:id/shares')
     .get(userController.getShares)
     .post(userController.createShare);
+router.route('/api/v2.0.1/users/:id/shares/:shareId/trax')
+    .get(userController.getSharedTrax);
+router.route('/api/v2.0.1/users/:id/shares/:shareId/places')
+    .get(userController.getSharedPlaces);
 router.route('/api/v2.0.1/users/:id/profile')
     .get(userController.getProfile)
     .put(userController.updateProfile);
@@ -27,7 +31,10 @@ router.route('/api/v2.0.1/users/:id/bookmarks/:bookmarkId')
     .put(userController.updateBookmark)
     .delete(userController.deleteBookmark);
 router.route('/api/v2.0.1/users/:id/places')
-    .get(userController.getPlaces);
+    .get(userController.getPlaces)
+    .post(userController.createPlace);
+router.route('/api/v2.0.1/users/:id/places/:placeId')
+    .put(userController.updatePlace);
 router.route('/api/v2.0.1/users/:id/places/search')
     .get(userController.searchPlaces);
 router.route('/api/v2.0.1/users/:id/analytics')
@@ -38,7 +45,10 @@ router.route('/api/v2.0.1/users/:id/places/details')
     .get(userController.getPlaceDetails);
 router.route('/api/v2.0.1/users/:id/places/findnearBy')
     .get(userController.findNearByPlaces);
-
+router.route('/api/v2.0.1/users/:id/shares/:shareId')
+    .delete(userController.deleteShare);
+router.route('/api/v2.0.1/users/:id/shares/:shareId/images')
+    .get(userController.getSharedImages);
 
 
 
