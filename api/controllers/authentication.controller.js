@@ -8,13 +8,19 @@ module.exports.appTest = (req, res) => {
 }
 
 module.exports.signup = (req, res) => {
-    AuthenticationService.signup(req.headers, req.body, (err, resp) => {
-        if (err) {
-            res.send(err)
-        } else {
-            res.send(resp)
+
+    AuthenticationService.signup(
+        req.headers,
+        req.body,
+        function (err, response) {
+
+            if (err) {
+                return res.status(err.status || 500).json(err);
+            }
+
+            res.status(200).json(response);
         }
-    })
+    );
 }
 
 module.exports.getOrganizations = (req, res) => {

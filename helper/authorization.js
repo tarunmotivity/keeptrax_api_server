@@ -6,6 +6,8 @@ exports.authorizeUser = (req, res, next) => {
     if (
         req.originalUrl === "/api/v2.0.1/users/login" ||
         req.originalUrl === "/api/v2.0.1/users/signup" ||
+        (req.method === "POST" &&
+            req.originalUrl === "/api/v2.0.1/users") ||
         req.originalUrl === "/api/v2.0.1/data"
     ) {
         return next();
@@ -59,7 +61,7 @@ exports.authorizeUser = (req, res, next) => {
                         }
                     } catch (error) {
                         res.json({ status: 401, message: "Unauthorized Request" });
-                    }                    
+                    }
                 }
             })
         }

@@ -851,6 +851,7 @@ async function findNearByPlaces(req, cb) {
         }
       }
     }).limit(20);
+    
     if (nearbyPlaces.length > 0) {
 
       return cb(null, {
@@ -1461,6 +1462,89 @@ async function getSharedImages(userId, shareId, query, cb) {
   }
 
 }
+
+
+
+exports.uploadProfileImage = async (userId, file, req) => {
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+    const imageUrl =
+        `${baseUrl}/uploads/images/${file.filename}`;
+
+    const encodedUrl =
+        Buffer.from(imageUrl).toString("base64");
+
+    await User.findByIdAndUpdate(
+        userId,
+        {
+            image_url: encodedUrl,
+            lastUpdatedOn: new Date()
+        }
+    );
+
+    return {
+        image_url: encodedUrl
+    };
+}
+async function updateShare(userId, shareId, body, cb) {
+
+    try {
+
+        const updateObj = {
+            bookmark: body.bookmark,
+            isAlwaysOn: body.isAlwaysOn,
+            isSharingImages: body.isSharingImages,
+            name: body.name,
+            recipients: body.recipients,
+            type: body.type,
+            lastupdatedOn: new Date()
+        };
+
+        if (body.expiresAt) {
+
+            updateObj.expiresAtInMilliSeconds =
+                Number(body.expiresAt);
+
+            updateObj.expiresAt = new Date(
+                Date.now() + Number(body.expiresAt)
+            );
+        }
+
+        const share = await Share.findOneAndUpdate(
+            {
+                _id: shareId,
+                sender: userId
+            },
+            {
+                $set: updateObj
+            },
+            {
+                new: true
+            }
+        );
+
+        if (!share) {
+            return cb({
+                status: 404,
+                message: "Share not found"
+            });
+        }
+
+        cb(null, {
+            message: "Share updated successfully",
+            response: share
+        });
+
+    } catch (err) {
+
+        cb({
+            status: 400,
+            message: err.message
+        });
+    }
+}
+module.exports.updateShare = updateShare;
 module.exports.getSharedImages = getSharedImages;
 module.exports.getSharedPlaces = getSharedPlaces;
 module.exports.deleteShare = deleteShare;

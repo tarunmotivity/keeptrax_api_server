@@ -2,6 +2,7 @@ var express = require('express')
 var router = express.Router()
 
 var userController = require('../controllers/users.controller')
+const upload = require("../../helper/upload");
 
 router.route('/getAllUsers').get(userController.getAllUsers);
 router.route('/user').put(userController.updateUser)
@@ -46,9 +47,15 @@ router.route('/api/v2.0.1/users/:id/places/details')
 router.route('/api/v2.0.1/users/:id/places/findnearBy')
     .get(userController.findNearByPlaces);
 router.route('/api/v2.0.1/users/:id/shares/:shareId')
+    .put(userController.updateShare)
     .delete(userController.deleteShare);
 router.route('/api/v2.0.1/users/:id/shares/:shareId/images')
     .get(userController.getSharedImages);
+router.post(
+  "/api/v2.0.1/users/:id/pictures",
+  upload.single("image"),
+  userController.uploadProfileImage
+);
 
 
 

@@ -419,3 +419,52 @@ exports.getSharedImages = (req, res) => {
     );
 
 };
+exports.uploadProfileImage = async (req, res) => {
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+    console.log("FILES:", req.files);
+    try {
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Image file is required"
+            });
+        }
+
+        const response = await UserService.uploadProfileImage(
+            req.params.id,
+            req.file,
+            req
+        );
+
+        res.json({
+            success: true,
+            response
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+};
+exports.updateShare = (req, res) => {
+
+    UserService.updateShare(
+        req.params.id,
+        req.params.shareId,
+        req.body,
+        function(err, response) {
+
+            if (err) {
+                return res.status(err.status || 500).json(err);
+            }
+
+            res.status(200).json(response);
+        }
+    );
+}
