@@ -12,5 +12,7 @@ router.route('/api/v2.0.1/users/:id/trax/:traxId')
     .delete(traxController.deleteTrax);
 router.route('/api/v2.0.1/users/:id/places/:placeId/trax/:traxId')
     .put(traxController.updateTrax);
+router.route('/api/v2.0.1/users/:id/trax')
+    .post(traxController.createTrax);
 
 module.exports = router

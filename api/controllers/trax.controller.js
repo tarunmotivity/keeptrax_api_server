@@ -85,3 +85,11 @@ module.exports.updateTrax = (req, res) => {
     );
 
 };
+exports.createTrax = function(req, res) {
+    TraxService.createTrax(req.params.id, req.body, function(err, response) {
+        if (err) {
+            return res.status(err.status || 400).json(err);
+        }
+        res.json(response);
+    });
+};

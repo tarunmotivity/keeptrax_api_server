@@ -259,6 +259,47 @@ async function updateTrax(userId, placeId, traxId, body, cb) {
     }
 
 }
+async function createTrax(userId, body, cb) {
+
+    try {
+
+        if (!body.placeId) {
+            return cb({
+                status: 400,
+                message: "placeId is required"
+            });
+        }
+
+        const now = new Date();
+
+        const visit = await Visits.create({
+            account: userId,
+            userPlace: body.placeId,
+            notes: body.notes || "",
+            entryTime: now,
+            exitTime: now,
+            activeStatus: true,
+            createdOn: now,
+            lastUpdatedOn: now
+        });
+
+        cb(null, {
+            message: "Successfully created visit",
+            response: {
+                id: visit._id
+            }
+        });
+
+    } catch (err) {
+
+        cb({
+            status: 400,
+            message: err.message
+        });
+
+    }
+}
+module.exports.createTrax = createTrax;
 module.exports.updateTrax = updateTrax;
 module.exports.deleteTrax = deleteTrax;
 module.exports.searchUserTrax = searchUserTrax;
