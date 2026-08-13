@@ -10,9 +10,9 @@ function getAllTrax(headers, cb) {
             createdOn: { $gte: new Date(headers.startdate), $lte: new Date(headers.enddate) }
         }
         console.log("USER ID:", headers.userid);
-console.log("START:", headers.startdate);
-console.log("END:", headers.enddate);
-console.log("QUERY:", dbQuery);
+        console.log("START:", headers.startdate);
+        console.log("END:", headers.enddate);
+        console.log("QUERY:", dbQuery);
         dbObj.getAndPopulate(Visits, dbQuery, 'userPlace', function (err, response) {
             if (err) {
                 cb(err)
@@ -56,11 +56,16 @@ function placesCount(startDate, endDate, userId, cb) {
 }
 async function getUserTrax(req, cb) {
 
+
     try {
 
         const query = {
             account: req.params.id
         };
+
+        if (req.query.placeId) {
+            query.userPlace = req.query.placeId;
+        }
 
         if (req.query.start && req.query.end) {
             query.entryTime = {
@@ -70,17 +75,21 @@ async function getUserTrax(req, cb) {
         }
 
         const rows = Number(req.query.rows) || 25;
+        const skip = Number(req.query.skip) || 0;
+
+        
 
         const visits = await Visits.find(query)
             .populate("userPlace")
             .sort({ entryTime: -1 })
+            .skip(skip)
             .limit(rows);
 
         cb(null, {
-            visits: visits,
+            visits,
             visitsCount: visits.length
         });
-
+        
     } catch (err) {
 
         cb({
@@ -89,8 +98,8 @@ async function getUserTrax(req, cb) {
         });
 
     }
-
 }
+
 async function searchUserTrax(req, cb) {
 
     try {
