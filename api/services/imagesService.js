@@ -33,7 +33,10 @@ exports.uploadImage = async (userId, body, file, req) => {
 
     const place = await UserPlaces.findById(body.placeId);
 
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const baseUrl =
+        process.env.BASE_URL ||
+        "https://keeptrax-api-server.onrender.com";
+
     const imageUrl = `${baseUrl}/uploads/images/${file.filename}`;
 
     const image = await Images.create({
