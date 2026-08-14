@@ -688,18 +688,372 @@ async function getAnalytics(req, cb) {
         $project: {
           _id: 0,
           placeId: "$place._id",
-          placeName: "$place.name",
-          visits: 1
+          placename: "$place.name",
+          category: {
+            $arrayElemAt: ["$place.internalCat", 0]
+          },
+          totalVisits: "$visits",
+          
+        }
+      }
+    ]);
+    const distinctDays = await Visits.aggregate([
+      {
+        $match: {
+          account: new mongoose.Types.ObjectId(userId),
+          activeStatus: true
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$entryTime"
+            }
+          }
         }
       }
     ]);
 
-    cb(null, {
-      totalVisits,
-      totalPlaces,
-      topPlaces
-    });
+    const numberofDays = distinctDays.length;
+    const avgTimeData = await Visits.aggregate([
+      {
+        $match: {
+          account: new mongoose.Types.ObjectId(userId),
+          activeStatus: true
+        }
+      },
+      {
+        $project: {
+          durationHours: {
+            $divide: [
+              {
+                $subtract: ["$exitTime", "$entryTime"]
+              },
+              1000 * 60 * 60
+            ]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          avgHours: {
+            $avg: "$durationHours"
+          }
+        }
+      }
+    ]);
 
+    const avgTimePerLocation =
+      avgTimeData.length > 0
+        ? Number(avgTimeData[0].avgHours.toFixed(2))
+        : 0;
+    const categories = await UserPlaces.aggregate([
+      {
+        $match: {
+          account: new mongoose.Types.ObjectId(userId),
+          activeStatus: true
+        }
+      },
+      {
+        $unwind: "$internalCat"
+      },
+      {
+        $group: {
+          _id: "$internalCat"
+        }
+      }
+    ]);
+
+    const totalCategories = categories.length;
+    const busiestDays = await Visits.aggregate([
+      {
+        $match: {
+          account: new mongoose.Types.ObjectId(userId),
+          activeStatus: true
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$entryTime"
+            }
+          },
+          totalVisits: {
+            $sum: 1
+          }
+        }
+      },
+      {
+        $sort: {
+          totalVisits: -1
+        }
+      },
+      {
+        $limit: 10
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          totalVisits: 1
+        }
+      }
+    ]);
+    const transitData = await Visits.find({
+      account: userId,
+      activeStatus: true
+    })
+      .sort({ entryTime: 1 })
+      .select("entryTime exitTime")
+      .lean();
+
+    let totalTransitHours = 0;
+    let transitCount = 0;
+
+    for (let i = 1; i < transitData.length; i++) {
+
+      const previousExit = transitData[i - 1].exitTime;
+      const currentEntry = transitData[i].entryTime;
+
+      if (previousExit && currentEntry) {
+
+        const diffHours =
+          (new Date(currentEntry) - new Date(previousExit))
+          / (1000 * 60 * 60);
+
+        // Ignore negative values and gaps larger than 24 hours
+        if (diffHours >= 0 && diffHours <= 24) {
+          totalTransitHours += diffHours;
+          transitCount++;
+        }
+      }
+    }
+
+    const avgTransitTime =
+      transitCount > 0
+        ? Number((totalTransitHours / transitCount).toFixed(2))
+        : 0;
+    const timeSpents = await Visits.aggregate([
+      {
+        $match: {
+          account: new mongoose.Types.ObjectId(userId),
+          activeStatus: true
+        }
+      },
+      {
+        $group: {
+          _id: "$userPlace",
+          timeSpent: {
+            $sum: {
+              $divide: [
+                { $subtract: ["$exitTime", "$entryTime"] },
+                1000 * 60
+              ]
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "userplaces",
+          localField: "_id",
+          foreignField: "_id",
+          as: "place"
+        }
+      },
+      {
+        $unwind: "$place"
+      },
+      {
+        $sort: {
+          timeSpent: -1
+        }
+      },
+      {
+        $limit: 10
+      },
+      {
+        $project: {
+          _id: 0,
+          placeId: "$place._id",
+          placename: "$place.name",
+          category: {
+            $arrayElemAt: ["$place.internalCat", 0]
+          },
+          timeSpent: 1,
+          hours: {
+            $round: [
+              { $divide: ["$timeSpent", 60] },
+              2
+            ]
+          }
+        }
+      }
+    ]);
+    const timeSpentMap = {};
+
+timeSpents.forEach(item => {
+  timeSpentMap[item.placeId.toString()] = item.timeSpent;
+});
+
+const mostPlaceVisits = topPlaces.map(place => ({
+  ...place,
+  timeSpent: Number(
+    (timeSpentMap[place.placeId.toString()] || 0).toFixed(2)
+  )
+}));
+    const topCategoriesByVisitCount = await Visits.aggregate([
+      {
+        $match: {
+          account: new mongoose.Types.ObjectId(userId),
+          activeStatus: true
+        }
+      },
+      {
+        $lookup: {
+          from: "userplaces",
+          localField: "userPlace",
+          foreignField: "_id",
+          as: "place"
+        }
+      },
+      {
+        $unwind: "$place"
+      },
+      {
+        $unwind: "$place.internalCat"
+      },
+      {
+        $group: {
+          _id: "$place.internalCat",
+          totalVisits: {
+            $sum: 1
+          }
+        }
+      },
+      {
+        $sort: {
+          totalVisits: -1
+        }
+      },
+      {
+        $limit: 10
+      },
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          totalVisits: 1
+        }
+      }
+    ]);
+    const timespentAt = await Visits.aggregate([
+      {
+        $match: {
+          account: new mongoose.Types.ObjectId(userId),
+          activeStatus: true
+        }
+      },
+      {
+        $lookup: {
+          from: "userplaces",
+          localField: "userPlace",
+          foreignField: "_id",
+          as: "place"
+        }
+      },
+      {
+        $unwind: "$place"
+      },
+      {
+        $unwind: "$place.internalCat"
+      },
+      {
+        $group: {
+          _id: "$place.internalCat",
+          timeSpent: {
+            $sum: {
+              $divide: [
+                { $subtract: ["$exitTime", "$entryTime"] },
+                1000 * 60
+              ]
+            }
+          }
+        }
+      },
+      {
+        $sort: {
+          timeSpent: -1
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          timeSpent: 1,
+          hours: {
+            $round: [
+              { $divide: ["$timeSpent", 60] },
+              2
+            ]
+          }
+        }
+      }
+    ]);
+    const transitTimes = [];
+
+    for (let i = 1; i < transitData.length; i++) {
+
+      const previousExit = transitData[i - 1].exitTime;
+      const currentEntry = transitData[i].entryTime;
+
+      if (previousExit && currentEntry) {
+
+        const transitHours =
+          (new Date(currentEntry) - new Date(previousExit))
+          / (1000 * 60 * 60);
+
+        const timeInLoc =
+          (new Date(transitData[i].exitTime) -
+            new Date(transitData[i].entryTime))
+          / (1000 * 60 * 60);
+
+        // Ignore unrealistic transit times
+        if (transitHours >= 0 && transitHours <= 24) {
+
+          transitTimes.push({
+            date: currentEntry,
+            transitTime: Number(transitHours.toFixed(2)),
+            timeInLoc: Number(timeInLoc.toFixed(2))
+          });
+
+        }
+      }
+    }
+
+    const latestTransitTimes =
+      transitTimes.slice(-20).reverse();
+    cb(null, {
+      summary: {
+        visitCount: totalVisits,
+        placeCount: totalPlaces,
+        numberofDays,
+        avgTimePerLocation,
+        avgTransitTime,
+        totalCategories,
+      },
+      mostPlaceVisits,
+      timeSpents,
+      busiestDays,
+      timespentAt,
+      transitTimes: latestTransitTimes,
+      topCategoriesByVisitCount,
+    });
   } catch (err) {
 
     cb({
