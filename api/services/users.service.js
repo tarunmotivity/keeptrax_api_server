@@ -693,7 +693,7 @@ async function getAnalytics(req, cb) {
             $arrayElemAt: ["$place.internalCat", 0]
           },
           totalVisits: "$visits",
-          
+
         }
       }
     ]);
@@ -885,11 +885,13 @@ async function getAnalytics(req, cb) {
           category: {
             $arrayElemAt: ["$place.internalCat", 0]
           },
-          timeSpent: 1,
+          timeSpent: {
+            $round: ["$timeSpent", 0]
+          },
           hours: {
             $round: [
               { $divide: ["$timeSpent", 60] },
-              2
+              0
             ]
           }
         }
@@ -897,16 +899,16 @@ async function getAnalytics(req, cb) {
     ]);
     const timeSpentMap = {};
 
-timeSpents.forEach(item => {
-  timeSpentMap[item.placeId.toString()] = item.timeSpent;
-});
+    timeSpents.forEach(item => {
+      timeSpentMap[item.placeId.toString()] = item.timeSpent;
+    });
 
-const mostPlaceVisits = topPlaces.map(place => ({
-  ...place,
-  timeSpent: Number(
-    (timeSpentMap[place.placeId.toString()] || 0).toFixed(2)
-  )
-}));
+    const mostPlaceVisits = topPlaces.map(place => ({
+      ...place,
+      timeSpent: Math.round(
+        (timeSpentMap[place.placeId.toString()] || 0).toFixed(2)
+      )
+    }));
     const topCategoriesByVisitCount = await Visits.aggregate([
       {
         $match: {
@@ -995,11 +997,13 @@ const mostPlaceVisits = topPlaces.map(place => ({
         $project: {
           _id: 0,
           category: "$_id",
-          timeSpent: 1,
+          timeSpent: {
+            $round: ["$timeSpent", 0]
+          },
           hours: {
             $round: [
               { $divide: ["$timeSpent", 60] },
-              2
+              0
             ]
           }
         }
@@ -1028,8 +1032,8 @@ const mostPlaceVisits = topPlaces.map(place => ({
 
           transitTimes.push({
             date: currentEntry,
-            transitTime: Number(transitHours.toFixed(2)),
-            timeInLoc: Number(timeInLoc.toFixed(2))
+            transitTime: Math.round(transitHours * 60),
+            timeInLoc: Math.round(timeInLoc * 60)
           });
 
         }
